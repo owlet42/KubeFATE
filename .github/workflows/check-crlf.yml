@@ -1,17 +1,19 @@
 name: check-crlf
 
-on: push
+on: 
+  push:
+    # Sequence of patterns matched against refs/heads
+    branches:    
+      # Push events on master branch
+      - master
+      - check-crlf
 
 jobs:
   example-workflow:
-    name: Example workflow using the Check CRLF action
+    name: Check CRLF action
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout repository contents
-        uses: actions/checkout@v1
-
-      - name: Use action to check for CRLF endings
+      - uses: actions/checkout@v2
+      - name: check-crlf
         uses: erclu/check-crlf@v1
-        with: # omit this mapping to use default path
-          path: /
