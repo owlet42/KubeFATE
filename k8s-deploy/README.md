@@ -126,3 +126,23 @@ Info            map[dashboard:[9999.fateboard.kubefate.net] ip:192.168.9.2 .....
 
 ## KubeFATE Service RESTful APIs Reference
 [API Reference](https://app.swaggerhub.com/apis-docs/vmware-octo/kubefate2/1.0.0-oas3#/cluster/createcluster)
+
+## Registry
+
+The deployment of kubefate supports other registries. If you have your own image source, deploy kubefate server,You can modify kubefate.yaml.
+
+```bash
+    spec:
+      serviceAccountName: kubefate-admin
+      containers:
+        - image: <REGISTRY-URL>/kubefate:v1.1.0
+```
+
+Deploy FATE or FATE-Serving cluster
+Modify cluster.yaml or cluster-serving.yaml
+
+```bash
+partyId: 9999
+registry: "<REGISTRY-URL>"
+pullPolicy: 
+```
