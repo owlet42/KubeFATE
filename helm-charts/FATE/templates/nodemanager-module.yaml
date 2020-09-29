@@ -75,6 +75,22 @@ data:
     eggroll.session.start.timeout.ms=180000
     eggroll.rollsite.adapter.sendbuf.size=1048576
     eggroll.rollpair.transferpair.sendbuf.size=4150000
+  fluent.conf: |
+    <source>
+      @type tail
+      path /data/projects/fate/eggroll/logs/*/*.*
+      pos_file /data/projects/fate/eggroll/log.pos
+      tag eggroll
+      multiline_flush_interval 2s
+      refresh_interval 5s
+      <parse>
+        @type none
+      </parse>
+    </source>
+    
+    <match **>
+      @type stdout
+    </match>
 ---
 apiVersion: apps/v1
 kind: Deployment
@@ -98,6 +114,14 @@ spec:
 {{ include "fate.labels" $root | indent 8 }}
     spec:
       containers:
+        - name: fluentd
+          image: fluent/fluentd:v1.11-debian-1
+          volumeMounts:
+          - name: eggroll-log
+            mountPath: /data/projects/fate/eggroll/logs/
+          - name: fluentd-conf
+            subPath: fluent.conf
+            mountPath: /fluentd/etc/fluent.conf
         - image: {{ $root.Values.image.registry }}/eggroll:{{ $root.Values.image.tag }}
           imagePullPolicy: {{ $root.Values.image.pullPolicy }}
           name: {{ $nodemanager.name }}
@@ -108,6 +132,8 @@ spec:
           ports:
             - containerPort: 4671
           volumeMounts:
+            - name: eggroll-log
+              mountPath: /data/projects/fate/eggroll/logs/
             - mountPath: /data/projects/fate/eggroll/conf/eggroll.properties
               name: nodemanager-confs
               subPath: eggroll.properties
@@ -122,6 +148,11 @@ spec:
       {{- end }}
       restartPolicy: Always
       volumes:
+        - name: eggroll-log
+          emptyDir: {}
+        - name: fluentd-conf
+          configMap:
+            name: {{ $nodemanager.name }}-config
         - name: nodemanager-confs
           configMap:
             name: {{ $nodemanager.name }}-config
