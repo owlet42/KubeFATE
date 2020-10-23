@@ -1,6 +1,5 @@
 -- create database if not exists
 CREATE DATABASE IF NOT EXISTS `eggroll_meta`;
-CREATE DATABASE IF NOT EXISTS `fate`;
 
 -- all operation under this database
 USE `eggroll_meta`;

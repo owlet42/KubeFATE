@@ -1,0 +1,76 @@
+work_mode: 1
+independent_scheduling_proxy: false
+use_registry: false
+fateflow:
+  host: 0.0.0.0
+  http_port: 9380
+  grpc_port: 9360
+fateboard:
+  host: <fateboard_ip>
+  port: <fateboard_port>
+database:
+  name: <jdbc.db_name>
+  user: <jdbc.username>
+  passwd: <jdbc.password>
+  host: <jdbc.db_host>
+  port: 3306
+  max_connections: 100
+  stale_timeout: 30
+EGGROLL:
+  address:
+    host: <rollsite_ip>
+    port: <rollsite_port>
+  cores_per_node: 20
+  nodes: 1
+SPARK:
+  address:
+    home:
+  cores_per_node: 20
+  nodes: 2
+HDFS:
+  address:
+    name_node: hdfs://fate-cluster
+    path_prefix:
+RABBITMQ:
+  address:
+    self:
+      9999: 
+      mng_port: 12345
+      port: 5672
+      user: <rabbitmq.username>
+      passwd: <rabbitmq.password>
+    10000:
+      host: 
+      port: 
+PROXY:
+  address:
+    host: 127.0.0.1
+    port: 9373
+model_store_address:
+  storage: mysql
+  name: model
+  host: 127.0.0.1
+  port: 3306
+  user: <jdbc.username>
+  passwd: <jdbc.password>
+  max_connections: 10
+  stale_timeout: 10
+data_storage_address:
+  user: <jdbc.username>
+  passwd: <jdbc.password>
+  host: 127.0.0.1
+  port: 3306
+servings:
+  hosts:
+    - <serving_ip>:<serving_port>
+zookeeper:
+  hosts:
+    - 127.0.0.1:2281
+  use_acl: true
+  user: <zk.username>
+  passwd: <zk.password>
+fatemanager:
+  host: 127.0.0.1
+  port: 8001
+  federatedId: 0
+

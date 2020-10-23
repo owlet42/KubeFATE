@@ -89,7 +89,7 @@ GenerateConfig() {
 		module_name=eggroll
 		#db connect inf
 		# use the fixed db name here
-		sed -i "s#<jdbc.url>#jdbc:mysql://${db_ip}:3306/eggroll_meta?useSSL=false\&serverTimezone=UTC\&characterEncoding=utf8\&allowPublicKeyRetrieval=true#g" ./confs-$party_id/confs/eggroll/conf/eggroll.properties
+		sed -i "s#<jdbc.url>#jdbc:mysql://${db_ip}:3306/${db_name}?useSSL=false\&serverTimezone=UTC\&characterEncoding=utf8\&allowPublicKeyRetrieval=true#g" ./confs-$party_id/confs/eggroll/conf/eggroll.properties
 		sed -i "s#<jdbc.username>#${db_user}#g" ./confs-$party_id/confs/eggroll/conf/eggroll.properties
 		sed -i "s#<jdbc.password>#${db_password}#g" ./confs-$party_id/confs/eggroll/conf/eggroll.properties
 
@@ -120,12 +120,12 @@ GenerateConfig() {
 		echo fateboard module of $party_id done!
 
 		# mysql
-		# sed -i "s/eggroll_meta/${db_name}/g" ./confs-$party_id/confs/mysql/init/create-eggroll-meta-tables.sql
+		sed -i "s/eggroll_meta/${db_name}/g" ./confs-$party_id/confs/mysql/init/create-eggroll-meta-tables.sql
 		echo >./confs-$party_id/confs/mysql/init/insert-node.sql
 		echo "CREATE DATABASE IF NOT EXISTS ${db_name};" >>./confs-$party_id/confs/mysql/init/insert-node.sql
 		echo "CREATE USER '${db_user}'@'%' IDENTIFIED BY '${db_password}';" >>./confs-$party_id/confs/mysql/init/insert-node.sql
 		echo "GRANT ALL ON *.* TO '${db_user}'@'%';" >>./confs-$party_id/confs/mysql/init/insert-node.sql
-		echo 'USE `eggroll_meta`;' >>./confs-$party_id/confs/mysql/init/insert-node.sql
+		echo 'USE `'${db_name}'`;' >>./confs-$party_id/confs/mysql/init/insert-node.sql
 		echo "INSERT INTO server_node (host, port, node_type, status) values ('${clustermanager_ip}', '${clustermanager_port_db}', 'CLUSTER_MANAGER', 'HEALTHY');" >>./confs-$party_id/confs/mysql/init/insert-node.sql
 		for ((j = 0; j < ${#nodemanager_ip[*]}; j++)); do
 			echo "INSERT INTO server_node (host, port, node_type, status) values ('${nodemanager_ip[j]}', '${nodemanager_port_db}', 'NODE_MANAGER', 'HEALTHY');" >>./confs-$party_id/confs/mysql/init/insert-node.sql
@@ -136,37 +136,20 @@ GenerateConfig() {
 
 		# fate_flow
 		sed -i "s/WORK_MODE =.*/WORK_MODE = 1/g" ./confs-$party_id/confs/fate_flow/conf/settings.py
-		sed -i "s/user:.*/user: '${db_user}'/g" ./confs-$party_id/confs/fate_flow/conf/base_conf.yaml
-		sed -i "s/passwd:.*/passwd: '${db_password}'/g" ./confs-$party_id/confs/fate_flow/conf/base_conf.yaml
-		sed -i "s/host: 192.168.0.1*/host: '${db_ip}'/g" ./confs-$party_id/confs/fate_flow/conf/base_conf.yaml
-		sed -i "s/name:.*/name: '${db_name}'/g" ./confs-$party_id/confs/fate_flow/conf/base_conf.yaml
+		sed -i "s/user: <jdbc.username>/user: '${db_user}'/g" ./confs-$party_id/confs/fate_flow/conf/service_conf.yaml
+		sed -i "s/passwd: <jdbc.password>/passwd: '${db_password}'/g" ./confs-$party_id/confs/fate_flow/conf/service_conf.yaml
+		sed -i "s/host: <jdbc.db_host>/host: '${db_ip}'/g" ./confs-$party_id/confs/fate_flow/conf/service_conf.yaml
+		sed -i "s/name: <jdbc.db_name>/name: '${db_name}'/g" ./confs-$party_id/confs/fate_flow/conf/service_conf.yaml
 
-		cat >./confs-$party_id/confs/fate_flow/conf/server_conf.json <<EOF
-{
-    "servers": {
-        "proxy": {
-            "host": "${proxy_ip}",
-            "port": ${proxy_port}
-        },
-        "fateboard": {
-            "host": "${fateboard_ip}",
-            "port": ${fateboard_port}
-        },
-        "fateflow": {
-            "host": "${fate_flow_ip}",
-            "grpc.port": ${fate_flow_grpc_port},
-            "http.port": ${fate_flow_http_port}
-        },
-        "fml_agent":  {
-            "host": "${fate_flow_ip}",
-            "port": ${fml_agent_port}
-        },
-        "servings": [
-          "${servingiplist[${i}]}:8000"
-        ]
-    }
-}
-EOF
+		sed -i "s/<serving_ip>:<serving_port>/${servingiplist[${i}]}:8000/g" ./confs-$party_id/confs/fate_flow/conf/service_conf.yaml
+
+		sed -i "s/host: <fateboard_ip>/host: ${fateboard_ip}/g" ./confs-$party_id/confs/fate_flow/conf/service_conf.yaml
+		sed -i "s/port: <fateboard_port>/port: ${fateboard_port}/g" ./confs-$party_id/confs/fate_flow/conf/service_conf.yaml
+
+		sed -i "s/host: <rollsite_ip>/host: ${proxy_ip}/g" ./confs-$party_id/confs/fate_flow/conf/service_conf.yaml
+		sed -i "s/port: <rollsite_port>/port: ${proxy_port}/g" ./confs-$party_id/confs/fate_flow/conf/service_conf.yaml
+
+
 		echo fate_flow module of $party_id done!
 		# rollsite
 		cat >./confs-$party_id/confs/eggroll/conf/route_table.json <<EOF

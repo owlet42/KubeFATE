@@ -82,7 +82,8 @@ services:
       - 4671
     volumes:
         - ./confs/eggroll/conf:/data/projects/fate/eggroll/conf
-        - ./confs/fate_flow/conf/server_conf.json:/data/projects/fate/python/arch/conf/server_conf.json
+        - ./confs/fate_flow/conf/service_conf.yaml:/data/projects/fate/conf/service_conf.yaml
+        - ./confs/fate_flow/conf/transfer_conf.yaml:/data/projects/fate/conf/transfer_conf.yaml
         - shared_dir_data:/data/projects/fate/eggroll/data
     networks:
       - fate-network
@@ -94,13 +95,13 @@ services:
       - "9360:9360"
       - "9380:9380"
     restart: always
+    command: ["bash", "-c", "sleep 5; source /data/projects/python/venv/bin/activate && pip install cryptography && python ./fate_flow/fate_flow_server.py"]
     volumes:
       - shared_dir_federatedml:/data/projects/fate/python/federatedml
-      - shared_dir_examples:/data/projects/fate/python/examples
+      - shared_dir_examples:/data/projects/fate/examples
       - download_dir:/data/projects/fate/python/download_dir
-      - ./confs/fate_flow/conf/settings.py:/data/projects/fate/python/fate_flow/settings.py
-      - ./confs/fate_flow/conf/base_conf.yaml:/data/projects/fate/python/arch/conf/base_conf.yaml
-      - ./confs/fate_flow/conf/server_conf.json:/data/projects/fate/python/arch/conf/server_conf.json
+      - ./confs/fate_flow/conf/service_conf.yaml:/data/projects/fate/conf/service_conf.yaml
+      - ./confs/fate_flow/conf/transfer_conf.yaml:/data/projects/fate/conf/transfer_conf.yaml
       - ./confs/eggroll/conf:/data/projects/fate/eggroll/conf
       - fate_flow_logs:/data/projects/fate/python/logs
     depends_on:
