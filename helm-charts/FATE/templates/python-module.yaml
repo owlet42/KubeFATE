@@ -18,35 +18,17 @@ metadata:
     fateMoudle: python
 {{ include "fate.labels" . | indent 4 }}
 data:
-  server_conf.json: |
-    {
-        "servers": {
-            "proxy": {
-                "host": "{{ .Values.modules.rollsite.ip }}", 
-                "port": 9370
-            }, 
-            "fateboard": {
-                "host": "{{ .Values.modules.python.fateboardIp }}", 
-                "port": 8080
-            }, 
-            {{- if .Values.modules.serving }}
-            "servings": [
-                "{{ .Values.modules.serving.ip }}:{{ .Values.modules.serving.port }}"
-            ],
-            {{- end }}
-            "fateflow": {
-                "host": "{{ .Values.modules.python.fateflowIp }}", 
-                "grpc.port": 9360,
-                "http.port": 9380
-            }
-        }
-    }
-  base_conf.yaml: |
+  service_conf.yaml: |
     work_mode: 1
-    fate_flow:
+    independent_scheduling_proxy: false
+    use_registry: false
+    fateflow:
       host: 0.0.0.0
       http_port: 9380
       grpc_port: 9360
+    fateboard:
+      host: {{ .Values.modules.python.fateboardIp }}
+      port: 8080
     database:
       name: '{{ .Values.modules.mysql.database }}'
       user: '{{ .Values.modules.mysql.user }}'
@@ -55,12 +37,36 @@ data:
       port: {{ .Values.modules.mysql.port }}
       max_connections: 100
       stale_timeout: 30
-    zookeeper:
-      hosts:
-        - 127.0.0.1:2281
-      use_acl: true
-      user: fate
-      password: fate
+    EGGROLL:
+      address:
+        host: {{ .Values.modules.rollsite.ip }}
+        port: 9370
+      cores_per_node: 20
+      nodes: 1
+    SPARK:
+      address:
+        home:
+      cores_per_node: 20
+      nodes: 2
+    HDFS:
+      address:
+        name_node: hdfs://fate-cluster
+        path_prefix:
+    RABBITMQ:
+      address:
+        self:
+          9999: 
+          mng_port: 12345
+          port: 5672
+          user: <rabbitmq.username>
+          passwd: <rabbitmq.password>
+        10000:
+          host: 
+          port: 
+    PROXY:
+      address:
+        host: 127.0.0.1
+        port: 9373
     model_store_address:
       storage: mysql
       name: model
@@ -70,6 +76,29 @@ data:
       passwd: '{{ .Values.modules.mysql.password }}'
       max_connections: 10
       stale_timeout: 10
+    data_storage_address:
+      user: '{{ .Values.modules.mysql.user }}'
+      passwd: '{{ .Values.modules.mysql.password }}'
+      host: {{ .Values.modules.mysql.ip }}
+      port: {{ .Values.modules.mysql.port }}
+    servings:
+      hosts:
+      {{- if .Values.modules.serving }}
+        - {{ .Values.modules.serving.ip }}:{{ .Values.modules.serving.port }}
+      {{- end }}
+    zookeeper:
+      hosts:
+        - 127.0.0.1:2281
+      use_acl: true
+      user: <zk.username>
+      passwd: <zk.password>
+    fatemanager:
+      host: 127.0.0.1
+      port: 8001
+      federatedId: 0
+  transfer_conf.yaml: |
+    paths: # dir or path
+      - "python/federatedml/transfer_variable/auth_conf"
 ---
 kind: ConfigMap
 apiVersion: v1
@@ -91,9 +120,13 @@ data:
     fateboard.datasource.password={{ .Values.modules.mysql.password }}
     server.tomcat.max-threads=1000
     server.tomcat.max-connections=20000
+    spring.servlet.multipart.max-file-size=10MB
+    spring.servlet.multipart.max-request-size=100MB
     spring.datasource.druid.filter.config.enabled=false
     spring.datasource.druid.web-stat-filter.enabled=false
     spring.datasource.druid.stat-view-servlet.enabled=false
+    server.compression.enabled=true
+    server.compression.mime-types=application/json,application/xml,text/html,text/xml,text/plain
 ---
 apiVersion: apps/v1
 kind: Deployment
@@ -168,18 +201,14 @@ spec:
             - containerPort: 9380
             - containerPort: 8484
           volumeMounts:
-            - mountPath: /data/projects/fate/python/eggroll/conf/server_conf.json
-              name: python-confs
-              subPath: server_conf.json
             - mountPath: /data/projects/fate/eggroll/conf/eggroll.properties
               name: eggroll-confs
               subPath: eggroll.properties
-            - mountPath: /data/projects/fate/python/arch/conf/server_conf.json
+            - mountPath: /data/projects/fate/conf/service_conf.yaml
               name: python-confs
-              subPath: server_conf.json
-              name: python-confs
-            - mountPath: /data/projects/fate/python/arch/conf/base_conf.yaml
-              subPath: base_conf.yaml
+              subPath: service_conf.yaml
+            - mountPath: /data/projects/fate/conf/transfer_conf.yaml
+              subPath: transfer_conf.yaml
               name: python-confs
             - name: logs
               mountPath: /data/projects/fate/python/logs

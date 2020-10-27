@@ -101,9 +101,12 @@ spec:
             - mountPath: /data/projects/fate/eggroll/conf/eggroll.properties
               name: nodemanager-confs
               subPath: eggroll.properties
-            - mountPath: /data/projects/fate/python/arch/conf/server_conf.json
+            - mountPath: /data/projects/fate/conf/service_conf.yaml
               name: python-confs
-              subPath: server_conf.json
+              subPath: service_conf.yaml
+            - mountPath: /data/projects/fate/conf/transfer_conf.yaml
+              subPath: transfer_conf.yaml
+              name: python-confs
             - name: data-dir
               mountPath: /data/projects/fate/eggroll/data
               subPath: {{ $nodemanager.subPath }}
