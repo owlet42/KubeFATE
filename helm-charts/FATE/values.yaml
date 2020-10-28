@@ -91,3 +91,311 @@ modules:
   serving:
     ip: 192.168.9.1
     port: 30209
+  Spark:
+    include: true
+    Path: "/opt/spark"
+    Master:
+      Name: master
+      Image: "k8s.gcr.io/spark"
+      ImageTag: "1.5.1_v3"
+      Replicas: 1
+      Component: "spark-master"
+      Cpu: "100m"
+      Memory: "512Mi"
+      ServicePort: 7077
+      ContainerPort: 7077
+      # Set Master JVM memory. Default 1g
+      # DaemonMemory: 1g
+      ServiceType: ClusterIP
+    WebUi:
+      Name: webui
+      ServicePort: 8080
+      ContainerPort: 8080
+      Component: "spark-webui"
+      Ingress:
+        Enabled: true
+        Path: "/"
+        Hosts:
+        - 9999.sparkui.kubefate.net
+        Tls: []
+      #    - Hosts:
+      #    SecretName: zeppelin
+      # Used to create an Ingress record.
+      # Hosts:
+      # - example.local
+      # Annotations:
+      #   kubernetes.io/ingress.class: nginx
+      #   kubernetes.io/tls-acme: "true"
+      # Tls:
+      #   Enabled: true
+      # Secrets must be manually created in the namespace.
+      #   SecretName: example-tls
+      #   Hosts:
+      #   - example.local
+    Worker:
+      Name: worker
+      Image: "k8s.gcr.io/spark"
+      ImageTag: "1.5.1_v3"
+      Replicas: 1
+      Component: "spark-worker"
+      Cpu: "100m"
+      Memory: "512Mi"
+      ContainerPort: 8081
+      # Set Worker JVM memory. Default 1g
+      # DaemonMemory: 1g
+      # Set how much total memory workers have to give executors
+      # ExecutorMemory: 1g
+      Autoscaling:
+        Enabled: false
+      ReplicasMax: 10
+      CpuTargetPercentage: 50
+  hdfs:
+    include: true
+    antiAffinity: "soft"
+    image:
+      repository: danisla/hadoop
+      tag: 2.9.0
+      pullPolicy: IfNotPresent
+
+    nameNode:
+      pdbMinAvailable: 1
+      resources:
+        requests:
+          memory: "256Mi"
+          cpu: "10m"
+        limits:
+          memory: "2048Mi"
+          cpu: "1000m"
+    dataNode:
+      replicas: 1
+      pdbMinAvailable: 1
+      resources:
+        requests:
+          memory: "256Mi"
+          cpu: "10m"
+        limits:
+          memory: "2048Mi"
+          cpu: "1000m"
+    webhdfs:
+      enabled: false
+    persistence:
+      nameNode:
+        enabled: false
+        storageClass: "-"
+        accessMode: ReadWriteOnce
+        size: 50Gi
+      dataNode:
+        enabled: false
+        storageClass: "-"
+        accessMode: ReadWriteOnce
+        size: 200Gi
+  rabbitmq:
+    include: true
+    rabbitmqUsername: guest
+    managementUsername: management
+    extraConfig: |
+    advancedConfig: |
+    definitionsSource: definitions.json
+    extraPlugins: |
+      rabbitmq_shovel,
+      rabbitmq_shovel_management,
+      rabbitmq_federation,
+      rabbitmq_federation_management,
+    definitions:
+      globalParameters: |-
+      users: |-
+      vhosts: |-
+      parameters: |-
+      permissions: |-
+      queues: |-
+      exchanges: |-
+      bindings: |-
+      policies: |-
+    forceBoot: false
+    rabbitmqVhost: "/"
+    rabbitmqMemoryHighWatermark: 256MB
+    rabbitmqMemoryHighWatermarkType: absolute
+    rabbitmqEpmdPort: 4369
+    rabbitmqNodePort: 5672
+    rabbitmqManagerPort: 15672
+    rabbitmqHipeCompile: false
+    rabbitmqCert:
+      enabled: false
+      existingSecret: ""
+      cacertfile: |
+      certfile: |
+      keyfile: |
+    extraVolumes: []
+    extraVolumeMounts: []
+    rabbitmqAuth:
+      enabled: false
+      config: |
+    rabbitmqClusterPartitionHandling: autoheal
+    rabbitmqAuthHTTP:
+      enabled: false
+      config: |
+        # auth_backends.1 = http
+        # auth_http.user_path     = http://some-server/auth/user
+        # auth_http.vhost_path    = http://some-server/auth/vhost
+        # auth_http.resource_path = http://some-server/auth/resource
+        # auth_http.topic_path    = http://some-server/auth/topic
+    rabbitmqLDAPPlugin:
+      enabled: false
+      config: |
+        # auth_backends.1 = ldap
+        # auth_ldap.servers.1  = my-ldap-server
+        # auth_ldap.user_dn_pattern = cn=${username},ou=People,dc=example,dc=com
+        # auth_ldap.use_ssl    = false
+        # auth_ldap.port       = 389
+        # auth_ldap.log        = false
+    rabbitmqMQTTPlugin:
+      enabled: false
+      config: |
+        # mqtt.default_user     = guest
+        # mqtt.default_pass     = guest
+        # mqtt.allow_anonymous  = true
+    rabbitmqWebMQTTPlugin:
+      enabled: false
+      config: |
+        # web_mqtt.ssl.port       = 12345
+        # web_mqtt.ssl.backlog    = 1024
+        # web_mqtt.ssl.certfile   = /etc/cert/cacert.pem
+        # web_mqtt.ssl.keyfile    = /etc/cert/cert.pem
+        # web_mqtt.ssl.cacertfile = /etc/cert/key.pem
+        # web_mqtt.ssl.password   = changeme
+    rabbitmqSTOMPPlugin:
+      enabled: false
+      config: |
+        # stomp.default_user = guest
+        # stomp.default_pass = guest
+    rabbitmqWebSTOMPPlugin:
+      enabled: false
+      config: |
+        # web_stomp.ws_frame = binary
+        # web_stomp.cowboy_opts.max_keepalive = 10
+    rabbitmqPrometheusPlugin:
+      enabled: false
+      nodePort: null
+      port: 15692
+      path: /metrics
+      config: |
+        ## prometheus.path and prometheus.tcp.port can be set above
+    rabbitmqAmqpsSupport:
+      enabled: false
+      amqpsNodePort: 5671
+      config: |
+        # listeners.ssl.default             = 5671
+        # ssl_options.cacertfile            = /etc/cert/cacert.pem
+        # ssl_options.certfile              = /etc/cert/cert.pem
+        # ssl_options.keyfile               = /etc/cert/key.pem
+        # ssl_options.verify                = verify_peer
+        # ssl_options.fail_if_no_peer_cert  = false
+    replicaCount: 3
+    image:
+      repository: rabbitmq
+      tag: 3.8.0-alpine
+      pullPolicy: IfNotPresent
+    busyboxImage:
+      repository: busybox
+      tag: 1.30.1
+      pullPolicy: IfNotPresent
+    terminationGracePeriodSeconds: 10
+    service:
+      annotations: {}
+      clusterIP: None
+      externalIPs: []
+      loadBalancerIP: ""
+      loadBalancerSourceRanges: []
+      type: ClusterIP
+      epmdNodePort: null
+      amqpNodePort: null
+      managerNodePort: null
+    podManagementPolicy: OrderedReady
+    updateStrategy: OnDelete
+    resources: {}
+    initContainer:
+      resources: {}
+    extraInitContainers: []
+    extraContainers: []
+    persistentVolume:
+      enabled: false
+      name: data
+      accessModes:
+        - ReadWriteOnce
+      size: 8Gi
+      annotations: {}
+    nodeSelector: {}
+    tolerations: []
+    podAnnotations: {}
+    statefulSetAnnotations: {}
+    podAntiAffinity: soft
+    podAntiAffinityTopologyKey: "kubernetes.io/hostname"
+    existingConfigMap: false
+    extraLabels: {}
+    rbac:
+      create: true
+    serviceAccount:
+      create: true
+      automountServiceAccountToken: true
+    ingress:
+      enabled: false
+      path: /
+      tls: false
+      tlsSecret: myTlsSecret
+      annotations: {}
+    livenessProbe:
+      initialDelaySeconds: 120
+      periodSeconds: 10
+      timeoutSeconds: 5
+      failureThreshold: 6
+      exec:
+        command:
+          - /bin/sh
+          - -c
+          - 'wget -O - -q --header "Authorization: Basic `echo -n \"$RABBIT_MANAGEMENT_USER:$RABBIT_MANAGEMENT_PASSWORD\" | base64`" http://localhost:15672/api/healthchecks/node | grep -qF "{\"status\":\"ok\"}"'
+
+    readinessProbe:
+      initialDelaySeconds: 20
+      periodSeconds: 5
+      timeoutSeconds: 3
+      failureThreshold: 6
+      exec:
+        command:
+          - /bin/sh
+          - -c
+          - 'wget -O - -q --header "Authorization: Basic `echo -n \"$RABBIT_MANAGEMENT_USER:$RABBIT_MANAGEMENT_PASSWORD\" | base64`" http://localhost:15672/api/healthchecks/node | grep -qF "{\"status\":\"ok\"}"'
+
+    existingSecret: ""
+    securityContext:
+      fsGroup: 101
+      runAsGroup: 101
+      runAsNonRoot: true
+      runAsUser: 100
+    env: {}
+    prometheus:
+      exporter:
+        enabled: false
+        env: {}
+        image:
+          repository: kbudde/rabbitmq-exporter
+          tag: v0.29.0
+          pullPolicy: IfNotPresent
+        port: 9090
+        capabilities: "bert,no_sort"
+        resources: {}
+      operator:
+        enabled: true
+        alerts:
+          enabled: true
+          selector:
+            role: alert-rules
+          labels: {}
+        serviceMonitor:
+          interval: 10s
+          namespace: monitoring
+          selector:
+            prometheus: kube-prometheus
+    clusterDomain: cluster.local
+    podDisruptionBudget: {}
+    lifecycle: {}
+    

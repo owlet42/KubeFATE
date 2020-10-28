@@ -1,0 +1,50 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: rabbitmq-ha
+  namespace: {{ .Release.Namespace }}
+  labels:
+    app: {{ template "rabbitmq-ha.name" . }}
+    chart: {{ template "rabbitmq-ha.chart" . }}
+    release: {{ .Release.Name }}
+    heritage: {{ .Release.Service }}
+spec:
+  serviceName: {{ template "rabbitmq-ha.fullname" . }}-discovery
+  selector:
+    matchLabels:
+      app: {{ template "rabbitmq-ha.name" . }}
+      release: {{ .Release.Name }}
+  template:
+    metadata:
+      labels:
+        app: {{ template "rabbitmq-ha.name" . }}
+        release: {{ .Release.Name }}
+    spec:
+      containers:
+        - name: rabbitmq-ha
+          image: rabbitmq:3.8.3-management
+          imagePullPolicy: {{ .Values.modules.rabbitmq.image.pullPolicy }}
+          ports:
+            - name: epmd
+              protocol: TCP
+              containerPort: 4369
+            - name: amqp
+              protocol: TCP
+              containerPort: 5672
+            - name: http
+              protocol: TCP
+              containerPort: 15672
+          env:
+            - name: MY_POD_NAME
+              valueFrom:
+                fieldRef:
+                  apiVersion: v1
+                  fieldPath: metadata.name
+            - name: RABBITMQ_DEFAULT_USER
+              value: "false"
+            - name: RABBITMQ_DEFAULT_PASS
+              value: "false"
+            - name: RABBITMQ_USER
+              value: "fate"
+            - name: RABBITMQ_PASSWORD
+              value: "fate"
