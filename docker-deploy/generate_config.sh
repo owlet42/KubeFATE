@@ -186,7 +186,13 @@ $(for ((j = 0; j < ${#partylist[*]}; j++)); do
             {
                 "ip": "${fate_flow_ip}",
                 "port": ${fate_flow_grpc_port}
-            }]
+            }],
+            "default": [
+                {
+                    "ip": "${partyiplist[${j}]}",
+                    "port": 9370
+                }
+            ]
         }
     },
     "permission": {
