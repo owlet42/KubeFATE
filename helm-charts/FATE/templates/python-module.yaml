@@ -20,12 +20,16 @@ metadata:
 data:
   service_conf.yaml: |
     work_mode: 1
-    independent_scheduling_proxy: false
     use_registry: false
     fateflow:
-      host: 0.0.0.0
+      # you must set real ip address or 127.0.0.1, 0.0.0.0 is not supported
+      host: <POD_IP>
       http_port: 9380
       grpc_port: 9360
+      # support rollsite or nginx as a coordinate proxy, rollsite recommended in the fate on eggroll, nginx is recommended in the fate on spark
+      # format(proxy: rollsite) means rollsite use the rollsite configuration of fate_one_eggroll and nginx use the nginx configuration of fate_one_spark
+      # you can customize the config by format(proxy:\n name: rollsite \n host: xx \n port: xx)
+      proxy: rollsite
     fateboard:
       host: {{ .Values.modules.python.fateboardIp }}
       port: 8080
@@ -37,36 +41,34 @@ data:
       port: {{ .Values.modules.mysql.port }}
       max_connections: 100
       stale_timeout: 30
-    EGGROLL:
-      address:
+    fate_on_eggroll:
+      clustermanager:
+        cores_per_node: 20
+        nodes: 1
+      rollsite:
         host: {{ .Values.modules.rollsite.ip }}
         port: 9370
-      cores_per_node: 20
-      nodes: 1
-    SPARK:
-      address:
-        home:
-      cores_per_node: 20
-      nodes: 2
-    HDFS:
-      address:
-        name_node: hdfs://fate-cluster
-        path_prefix:
-    RABBITMQ:
-      address:
-        self:
-          9999: 
-          mng_port: 12345
-          port: 5672
-          user: <rabbitmq.username>
-          passwd: <rabbitmq.password>
-        10000:
-          host: 
-          port: 
-    PROXY:
-      address:
-        host: 127.0.0.1
-        port: 9373
+    fate_on_spark:
+      spark:
+        # default use SPARK_HOME environment variable
+        home: {{ .Values.modules.python.spark.home }}
+        cores_per_node: {{ .Values.modules.python.spark.cores_per_node }}
+        nodes: {{ .Values.modules.python.spark.nodes }}
+      hdfs:
+        name_node: {{ .Values.modules.python.hdfs.name_node }}
+        # default /
+        path_prefix: {{ .Values.modules.python.hdfs.path_prefix }}
+      rabbitmq:
+        host: {{ .Values.modules.python.rabbitmq.host }}
+        mng_port: {{ .Values.modules.python.rabbitmq.mng_port }}
+        port: {{ .Values.modules.python.rabbitmq.port }}
+        user: {{ .Values.modules.python.rabbitmq.user }}
+        password: {{ .Values.modules.python.rabbitmq.password }}
+        # default conf/rabbitmq_route_table.yaml
+        route_table: {{ .Values.modules.python.rabbitmq.route_table }}
+      nginx:
+        host: {{ .Values.modules.python.nginx.host }}
+        port: {{ .Values.modules.python.nginx.port }}
     model_store_address:
       storage: mysql
       name: model
@@ -76,11 +78,6 @@ data:
       passwd: '{{ .Values.modules.mysql.password }}'
       max_connections: 10
       stale_timeout: 10
-    data_storage_address:
-      user: '{{ .Values.modules.mysql.user }}'
-      passwd: '{{ .Values.modules.mysql.password }}'
-      host: {{ .Values.modules.mysql.ip }}
-      port: {{ .Values.modules.mysql.port }}
     servings:
       hosts:
       {{- if .Values.modules.serving }}
@@ -91,7 +88,7 @@ data:
         - 127.0.0.1:2281
       use_acl: true
       user: <zk.username>
-      passwd: <zk.password>
+      password: <zk.password>
     fatemanager:
       host: 127.0.0.1
       port: 8001
@@ -196,19 +193,33 @@ spec:
         - image: {{ .Values.image.registry }}/python:{{ .Values.image.tag }}
           imagePullPolicy: {{ .Values.image.pullPolicy }}
           name: python
+          env:
+          - name: POD_IP
+            valueFrom:
+              fieldRef:
+                fieldPath: status.podIP
           ports:
             - containerPort: 9360
             - containerPort: 9380
             - containerPort: 8484
+          command:
+            - /bin/bash
+            - -c
+            - |
+                set -x
+                mkdir -p /data/projects/fate/conf/
+                cp /data/projects/fate/conf1/transfer_conf.yaml /data/projects/fate/conf/transfer_conf.yaml
+                cp /data/projects/fate/conf1/service_conf.yaml /data/projects/fate/conf/service_conf.yaml
+                sed -i "s/host: <POD_IP>/host: ${POD_IP}/g" /data/projects/fate/conf/service_conf.yaml
+                sleep 5;
+                source /data/projects/python/venv/bin/activate 
+                pip install cryptography 
+                python ./fate_flow/fate_flow_server.py
           volumeMounts:
             - mountPath: /data/projects/fate/eggroll/conf/eggroll.properties
               name: eggroll-confs
               subPath: eggroll.properties
-            - mountPath: /data/projects/fate/conf/service_conf.yaml
-              name: python-confs
-              subPath: service_conf.yaml
-            - mountPath: /data/projects/fate/conf/transfer_conf.yaml
-              subPath: transfer_conf.yaml
+            - mountPath: /data/projects/fate/conf1/
               name: python-confs
             - name: logs
               mountPath: /data/projects/fate/python/logs
