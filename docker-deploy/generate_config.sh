@@ -189,7 +189,7 @@ $(for ((j = 0; j < ${#partylist[*]}; j++)); do
             }],
             "default": [
                 {
-                    "ip": "${partyiplist[${j}]}",
+                    "ip": "rollsite",
                     "port": 9370
                 }
             ]

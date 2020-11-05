@@ -1,0 +1,68 @@
+# Copyright 2019-2020 VMware, Inc.
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+# http://www.apache.org/licenses/LICENSE-2.0
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+{{ if .Values.modules.spark.include }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: spark-worker
+  labels:
+    fateMoudle: spark-worker
+{{ include "fate.labels" . | indent 4 }}
+spec:
+  replicas: {{ default 1 .Values.modules.spark.worker.replicas }}
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      fateMoudle: spark-worker
+{{ include "fate.matchLabels" . | indent 6 }}
+  template:
+    metadata:
+      labels:
+        fateMoudle: spark-worker
+{{ include "fate.labels" . | indent 8 }}
+    spec:
+      containers:
+        - name: spark-worker
+          image: {{ .Values.modules.spark.worker.Image }}:{{ .Values.modules.spark.worker.ImageTag }}
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          env:
+          - name: SPARK_MASTER
+            value: "spark://spark-master:7077"
+          ports:
+            - containerPort: 8081
+      {{- with .Values.modules.spark.worker.nodeSelector }}
+      nodeSelector: 
+{{ toYaml . | indent 6 }}
+      {{- end }}
+      restartPolicy: Always
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: spark-worker-1
+  labels:
+    fateMoudle: spark-worker
+{{ include "fate.labels" . | indent 4 }}
+spec:
+  ports:
+    - name: "8081"
+      port: 8081
+      targetPort: 8081
+      protocol: TCP
+  type: {{ .Values.modules.spark.worker.type }}
+  clusterIP: None
+  selector:
+    fateMoudle: spark-worker
+{{ include "fate.matchLabels" . | indent 4 }}
+---
+{{ end }}

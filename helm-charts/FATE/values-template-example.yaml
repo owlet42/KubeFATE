@@ -77,17 +77,33 @@ servingPort: 30209
 
 spark:
   master:
-    Image: "k8s.gcr.io/spark"
-    ImageTag: "1.5.1_v3"
-    Replicas: 1
-    Cpu: "100m"
-    Memory: "512Mi"
+    Image: "bde2020/spark-master"
+    ImageTag: "2.4.1-hadoop2.7"
+    replicas: 1
+    nodeSelector: {}
   worker:
-    Image: "k8s.gcr.io/spark"
-    ImageTag: "1.5.1_v3"
-    Replicas: 3
-    Cpu: "100m"
-    Memory: "512Mi"
-    Autoscaling: 
-      Enabled: false
-    ReplicasMax: 10
+    Image: "bde2020/spark-worker"
+    ImageTag: "2.4.1-hadoop2.7"
+    replicas: 1
+    nodeSelector: {}
+hdfs:
+  namenode:
+    nodeSelector: {}
+  datanode:
+    nodeSelector: {}
+nginx:
+  nodeSelector: {}
+  route_table: 
+    10000: 
+      proxy: 
+        - host: 192.168.0.1 
+          port: 9390
+      fateflow: 
+        - host: 192.168.0.1
+          port: 9360
+rabbitmq:
+  nodeSelector: {}
+  route_table:
+    10000:
+      host: rabbitmq
+      port: 5672

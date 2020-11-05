@@ -58,7 +58,7 @@ services:
       - "8080:8080"
     volumes:
       - ./confs/fateboard/conf:/data/projects/fate/fateboard/conf
-      - fate_flow_logs:/data/projects/fate/python/logs
+      - fate_flow_logs:/data/projects/fate/logs
     networks:
       - fate-network
     depends_on:
@@ -103,7 +103,7 @@ services:
       - ./confs/fate_flow/conf/service_conf.yaml:/data/projects/fate/conf/service_conf.yaml
       - ./confs/fate_flow/conf/transfer_conf.yaml:/data/projects/fate/conf/transfer_conf.yaml
       - ./confs/eggroll/conf:/data/projects/fate/eggroll/conf
-      - fate_flow_logs:/data/projects/fate/python/logs
+      - fate_flow_logs:/data/projects/fate/logs
     depends_on:
       - mysql
       - rollsite

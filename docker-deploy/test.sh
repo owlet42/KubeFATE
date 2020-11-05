@@ -25,6 +25,16 @@ cd ${WORKINGDIR}
 work_mode=1
 
 
+get_party_ip(){
+    target_party_id=$1
+    for ((i = 0; i < ${#partylist[*]}; i++)); do
+        if [ "${partylist[$i]}" = "$target_party_id" ]; then
+            target_party_ip=${partyiplist[$i]}
+        fi
+    done
+    return $target_party_ip
+}
+
 Test() {
 
     while [ "$1" != "" ]; do
@@ -45,6 +55,11 @@ Test() {
             min_test_task $@
             break
         ;;
+        serving)
+            shift
+            serving $@
+            break
+        ;;
 		esac
 		shift
 	done
@@ -57,12 +72,14 @@ toy_example() {
     host=$2
     echo "guest_id: "$guest
     echo "host_id: "$host
+
     target_party_id=$1
+    echo "target_party_id: "$target_party_id
     for ((i = 0; i < ${#partylist[*]}; i++)); do
-			if [ "${partylist[$i]}" = "$target_party_id" ]; then
-				target_party_ip=${partyiplist[$i]}
-			fi
-		done
+        if [ "${partylist[$i]}" = "$target_party_id" ]; then
+            target_party_ip=${partyiplist[$i]}
+        fi
+    done
     echo "*********************start docker log***************************"
 	ssh -tt $user@$target_party_ip <<eeooff
 cd $dir
@@ -141,6 +158,11 @@ eeooff
     echo "*********************end docker log***************************"
     echo "party $target_party_id cluster min_test_task test is success!"
 
+}
+
+serving_host(){
+    echo "start test serving_host"
+    
 }
 
 
