@@ -2,7 +2,7 @@
 image:
   registry: {{ .registry | default "federatedai" }}
   isThridParty: {{ empty .registry | ternary  "false" "true" }}
-  tag: 1.4.5-release
+  tag: 1.5.0-release
   pullPolicy: {{ .pullPolicy | default "IfNotPresent" }}
 
 partyId: {{ .partyId }}
@@ -54,6 +54,26 @@ modules:
     fateboardIp: fateboard
     fateboardType: ClusterIP
     fateflowIp: fateflow
+    backend: eggroll
+    spark: 
+      master: spark://spark-master:7077
+      home: 
+      cores_per_node: 20
+      nodes: 2
+    hdfs:
+      name_node: hdfs://namenode:9000
+      path_prefix:
+    rabbitmq:
+      host: rabbitmq
+      mng_port: 15672
+      port: 5672
+      user: fate
+      password: fate
+      # default conf/rabbitmq_route_table.yaml
+      route_table: 
+    nginx:
+      host: nginx
+      port: 9390
     {{- with .python }}
     fateflowType: {{ .fateflowType | default "ClusterIP" }}
     fateflowNodePort: {{ .fateflowNodePort }}
@@ -160,25 +180,21 @@ modules:
   serving:
     ip: {{ .servingIp }}
     port: {{ .servingPort }}
-  pythonSpark:
-    include: {{ has "pythonSpark" .modules }}
-    fateflowType: ClusterIP
-    nodeSelector: {}
   fateboard:
     include: {{ has "fateboard" .modules }}
     type: ClusterIP
   spark:
     include: {{ has "spark" .modules }}
     master:
-      Image: "bde2020/spark-master"
-      ImageTag: "2.4.1-hadoop2.7"
-      replicas: 1
+      Image: "{{ .spark.master.Image }}"
+      ImageTag: "{{ .spark.master.ImageTag }}"
+      replicas: {{ .spark.master.replicas }}
       nodeSelector: {}
       type: ClusterIP
     worker:
-      Image: "bde2020/spark-worker"
-      ImageTag: "2.4.1-hadoop2.7"
-      replicas: 1
+      Image: "{{ .spark.worker.ImageTag }}"
+      ImageTag: "{{ .spark.worker.ImageTag }}"
+      replicas: {{ .spark.worker.replicas }}
       nodeSelector: {}
       type: ClusterIP
   hdfs:
@@ -194,11 +210,23 @@ modules:
     nodeSelector: {}
     type: ClusterIP
     route_table: 
-{{ toYaml .nginx.route_table | indent 6 }}
+      10000: 
+        proxy: 
+          - host: 192.168.0.1 
+            port: 9390
+        fateflow: 
+          - host: 192.168.0.1
+            port: 9360
   rabbitmq:
     include: {{ has "rabbitmq" .modules }}
     nodeSelector: {}
     type: ClusterIP
+    default_user: fate
+    default_pass: fate
+    user: fate
+    password: fate
     route_table:
-{{ toYaml .rabbitmq.route_table | indent 6 }}
+      10000:
+        host: rabbitmq
+        port: 5672
     

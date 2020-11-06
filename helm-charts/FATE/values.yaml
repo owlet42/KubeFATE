@@ -32,13 +32,13 @@ persistence:
 
 modules:
   rollsite: 
-    include: false
+    include: true
     ip: rollsite
     type: NodePort
     nodePort: 30009
     nodeSelector: {}
   python: 
-    include: false
+    include: true
     fateboardIp: fateboard
     fateboardType: ClusterIP
     fateflowIp: fateflow
@@ -65,12 +65,12 @@ modules:
       host: nginx
       port: 9390
   clustermanager: 
-    include: false
+    include: true
     ip: clustermanager
     type: ClusterIP
     nodeSelector: {}
   nodemanager:  
-    include: false
+    include: true
     list:
     - name: nodemanager-0
       nodeSelector: {}
@@ -89,12 +89,12 @@ modules:
       accessMode: ReadWriteOnce
       size: 1Gi
   client: 
-    include: false
+    include: true
     ip: client
     type: ClusterIP
     nodeSelector: {}
   mysql: 
-    include: false
+    include: true
     type: ClusterIP
     nodeSelector: {}
     ip: mysql
@@ -112,10 +112,10 @@ modules:
     ip: 192.168.9.1
     port: 30209
   fateboard:
-    include: false
+    include: true
     type: ClusterIP
   spark:
-    include: true
+    include: false
     master:
       Image: "bde2020/spark-master"
       ImageTag: "2.4.1-hadoop2.7"

@@ -1,7 +1,7 @@
 name: fate-10000
 namespace: fate-10000
 chartName: fate
-chartVersion: v1.4.5
+chartVersion: v1.5.0
 partyId: 10000
 registry: ""
 pullPolicy: 
@@ -14,8 +14,9 @@ modules:
   - nodemanager
   - mysql
   - python
+  - fateboard
   - client
-  - spark
+  #- spark
 
 rollsite: 
   type: NodePort
@@ -49,6 +50,7 @@ python:
   fateflowType: NodePort
   fateflowNodePort: 30109
   nodeSelector: {}
+  backend: eggroll
 
 mysql: 
   nodeSelector: {}

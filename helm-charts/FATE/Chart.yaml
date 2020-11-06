@@ -10,4 +10,4 @@ sources:
   - https://github.com/FederatedAI/FATE
 
 
-sparkappVersion: 1.5.1
+sparkappVersion: 2.4.1
