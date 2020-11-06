@@ -8,27 +8,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-{{ if .Values.modules.python.include }}
-apiVersion: extensions/v1beta1
-kind: Ingress
-metadata:
-  name: fateboard
-  labels:
-    fateMoudle: fateboard
-{{ include "fate.labels" . | indent 4 }}
-spec:
-  rules:
-  - host: {{ .Values.host.fateboard }}
-    http:
-      paths:
-      - path: /
-        backend:
-          serviceName: fateboard
-          servicePort: 8080
----
-{{ end }}
-
-{{ if .Values.modules.pythonSpark.include }}
+{{ if .Values.modules.fateboard.include }}
 apiVersion: extensions/v1beta1
 kind: Ingress
 metadata:

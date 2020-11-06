@@ -28,12 +28,12 @@ data:
         - host: nginx 
           port: 9390
         {{- end }}
-    9999:
+    {{ .Values.partyId }}:
       proxy:
         - host: nginx 
           port: 9390
       fateflow:
-        - host: fate-flow 
+        - host: fateflow 
           port: 9360
 {{ toYaml .Values.modules.nginx.route_table | indent 4 }}
   nginx.conf: |
@@ -71,7 +71,7 @@ data:
     
         #gzip  on;
         upstream fate_cluster {
-            server fate-flow:9360;   # just an invalid address as a place holder
+            server fateflow:9360;   # just an invalid address as a place holder
             balancer_by_lua_file 'lua/balancer.lua';
         }
         lua_package_path "$prefix/lua/?.lua;;";

@@ -35,9 +35,21 @@ spec:
         - name: spark-worker
           image: {{ .Values.modules.spark.worker.Image }}:{{ .Values.modules.spark.worker.ImageTag }}
           imagePullPolicy: {{ .Values.image.pullPolicy }}
+          command: ["/spark/bin/spark-class", "org.apache.spark.deploy.worker.Worker", "spark://spark-master:7077"]
+          #command: ["/bin/bash", "-c", "/spark/bin/spark-class org.apache.spark.deploy.worker.Worker --webui-port 8081 $SPARK_MASTER"]
           env:
           - name: SPARK_MASTER
             value: "spark://spark-master:7077"
+          - name: SPARK_DAEMON_MEMORY
+            value: "1g"
+          - name: SPARK_WORKER_MEMORY
+            value: "1g"
+          - name: SPARK_WORKER_WEBUI_PORT
+            value: "8081"
+          resources:
+            requests:
+              cpu: "100m"
+              memory: "512Mi"
           ports:
             - containerPort: 8081
       {{- with .Values.modules.spark.worker.nodeSelector }}

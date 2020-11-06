@@ -35,13 +35,26 @@ spec:
         - name: spark-master
           image: {{ .Values.modules.spark.master.Image }}:{{ .Values.modules.spark.master.ImageTag }}
           imagePullPolicy: {{ .Values.image.pullPolicy }}
+          command: ["/bin/sh","-c"]
+          args: ["echo $(hostname -i) spark-worker >> /etc/hosts; /spark/bin/spark-class org.apache.spark.deploy.master.Master"]
           env:
           - name: INIT_DAEMON_STEP
             value: setup_spark
+          - name: SPARK_DAEMON_MEMORY
+            value: "1g"
+          - name: SPARK_MASTER_HOST
+            value: spark-master
+          - name: SPARK_MASTER_PORT
+            value: "7077"
+          - name: SPARK_MASTER_WEBUI_PORT
+            value: "8080"
+          resources:
+            requests:
+              cpu: "100m"
+              memory: "512Mi"
           ports:
             - containerPort: 8080
             - containerPort: 7077
-            - containerPort: 6066
       {{- with .Values.modules.spark.master.nodeSelector }}
       nodeSelector: 
       {{- range $k, $v := . }}
@@ -67,10 +80,6 @@ spec:
     protocol: TCP
     port: 7077
     targetPort: 7077
-  - name: master-rest
-    protocol: TCP
-    port: 6066
-    targetPort: 6066
   type: {{ .Values.modules.spark.master.type }}
   clusterIP: None
   selector:

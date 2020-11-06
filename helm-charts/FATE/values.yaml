@@ -32,42 +32,45 @@ persistence:
 
 modules:
   rollsite: 
-    include: true
+    include: false
     ip: rollsite
     type: NodePort
     nodePort: 30009
     nodeSelector: {}
   python: 
-    include: true
+    include: false
     fateboardIp: fateboard
     fateboardType: ClusterIP
     fateflowIp: fateflow
     fateflowType: ClusterIP
     nodeSelector: {}
+    backend: eggroll
     spark: 
-      home: fate-9999-spark-master
+      master: spark://spark-master:7077
+      home: 
       cores_per_node: 20
       nodes: 2
     hdfs:
-      name_node: hdfs://fate-cluster
+      name_node: hdfs://namenode:9000
       path_prefix:
     rabbitmq:
-      host: 192.168.0.4
-      mng_port: 12345
+      host: rabbitmq
+      mng_port: 15672
       port: 5672
       user: fate
       password: fate
-      route_table:
+      # default conf/rabbitmq_route_table.yaml
+      route_table: 
     nginx:
-      host: 127.0.0.1
+      host: nginx
       port: 9390
   clustermanager: 
-    include: true
+    include: false
     ip: clustermanager
     type: ClusterIP
     nodeSelector: {}
   nodemanager:  
-    include: true
+    include: false
     list:
     - name: nodemanager-0
       nodeSelector: {}
@@ -86,12 +89,12 @@ modules:
       accessMode: ReadWriteOnce
       size: 1Gi
   client: 
-    include: true
+    include: false
     ip: client
     type: ClusterIP
     nodeSelector: {}
   mysql: 
-    include: true
+    include: false
     type: ClusterIP
     nodeSelector: {}
     ip: mysql
@@ -108,12 +111,8 @@ modules:
   serving:
     ip: 192.168.9.1
     port: 30209
-  pythonSpark:
-    include: true
-    fateflowType: ClusterIP
-    nodeSelector: {}
   fateboard:
-    include: true
+    include: false
     type: ClusterIP
   spark:
     include: true
@@ -124,13 +123,13 @@ modules:
       nodeSelector: {}
       type: ClusterIP
     worker:
-      Image: "bde2020/spark-master"
+      Image: "bde2020/spark-worker"
       ImageTag: "2.4.1-hadoop2.7"
       replicas: 1
       nodeSelector: {}
       type: ClusterIP
   hdfs:
-    include: true
+    include: false
     namenode:
       nodeSelector: {}
       type: ClusterIP
@@ -138,7 +137,7 @@ modules:
       nodeSelector: {}
       type: ClusterIP
   nginx:
-    include: true
+    include: false
     nodeSelector: {}
     type: ClusterIP
     route_table: 
@@ -150,9 +149,13 @@ modules:
           - host: 192.168.0.1
             port: 9360
   rabbitmq:
-    include: true
+    include: false
     nodeSelector: {}
     type: ClusterIP
+    default_user: fate
+    default_pass: fate
+    user: fate
+    password: fate
     route_table:
       10000:
         host: rabbitmq
