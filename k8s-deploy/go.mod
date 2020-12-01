@@ -5,6 +5,7 @@ go 1.13
 require (
 	github.com/Masterminds/sprig/v3 v3.1.0
 	github.com/appleboy/gin-jwt/v2 v2.6.3
+	github.com/astaxie/beego v1.12.3 // indirect
 	github.com/dgrijalva/jwt-go v3.2.0+incompatible
 	github.com/gin-contrib/logger v0.0.2
 	github.com/gin-gonic/gin v1.6.3
