@@ -16,6 +16,8 @@
 package kube
 
 import (
+	"context"
+
 	"github.com/rs/zerolog/log"
 	"github.com/spf13/viper"
 	"helm.sh/helm/v3/pkg/kube"
@@ -27,6 +29,7 @@ import (
 //}
 type Kube struct {
 	client kubernetes.Interface
+	ctx    context.Context
 }
 
 var KUBE Kube
@@ -44,4 +47,5 @@ func init() {
 		log.Error().Err(err).Msg("getClientset")
 	}
 	KUBE.client = client
+	KUBE.ctx = context.Background()
 }

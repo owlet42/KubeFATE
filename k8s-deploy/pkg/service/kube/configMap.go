@@ -14,3 +14,14 @@
  */
 
 package kube
+
+import (
+	corev1 "k8s.io/api/core/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+)
+
+// GetConfigMap is get a ConfigMap
+func (e *Kube) GetConfigMap(configMapName, namespace string) (*corev1.ConfigMap, error) {
+	configMap, err := e.client.CoreV1().ConfigMaps(namespace).Get(e.ctx, configMapName, metav1.GetOptions{})
+	return configMap, err
+}

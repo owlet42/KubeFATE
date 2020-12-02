@@ -39,11 +39,9 @@ func (e *Kube) GetLog(name, namespace string, labels labels.Labels) {
 	return
 }
 
-func (e *Kube) getPodLogs(pod *corev1.Pod) string {
-	podLogOpts := corev1.PodLogOptions{}
+func (e *Kube) getPodLogs(container, podName, podNamespace string) string {
 
-	req := e.client.CoreV1().Pods(pod.Namespace).GetLogs(pod.Name, &podLogOpts)
-	podLogs, err := req.Stream(context.Background())
+	podLogs, err := e.client.CoreV1().Pods(podNamespace).GetLogs(podName, &corev1.PodLogOptions{Container: container}).Stream(context.Background())
 	if err != nil {
 		return "error in opening stream: " + err.Error()
 	}

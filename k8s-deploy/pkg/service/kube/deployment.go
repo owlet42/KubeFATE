@@ -14,3 +14,16 @@
  */
 
 package kube
+
+import (
+	"context"
+
+	v1 "k8s.io/api/apps/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+)
+
+// GetDeployment is get a Deployment
+func (e *Kube) GetDeployment(deploymentName, namespace string) (*v1.Deployment, error) {
+	deployment, err := e.client.AppsV1().Deployments(namespace).Get(context.Background(), deploymentName, metav1.GetOptions{})
+	return deployment, err
+}

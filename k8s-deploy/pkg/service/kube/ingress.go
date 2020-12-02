@@ -14,3 +14,16 @@
  */
 
 package kube
+
+import (
+	"context"
+
+	networkingv1beta1 "k8s.io/api/networking/v1beta1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+)
+
+// GetIngress is get a Ingress
+func (e *Kube) GetIngress(ingressName, namespace string) (*networkingv1beta1.Ingress, error) {
+	ingress, err := e.client.NetworkingV1beta1().Ingresses(namespace).Get(context.Background(), ingressName, metav1.GetOptions{})
+	return ingress, err
+}
