@@ -12,34 +12,22 @@
  * limitations under the License.
  *
  */
-package service
+
+package kube
 
 import (
-	"os"
+	"context"
 
-	"helm.sh/helm/v3/pkg/action"
-	"helm.sh/helm/v3/pkg/cli"
-	"helm.sh/helm/v3/pkg/release"
+	corev1 "k8s.io/api/core/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-func Get(namespace, name string) (*release.Release, error) {
-	EnvCs.Lock()
-	err := os.Setenv("HELM_NAMESPACE", namespace)
-	if err != nil {
-		panic(err)
-	}
-	settings := cli.New()
-	EnvCs.Unlock()
+// Node interface
+type Node interface {
+	GetNodes(labelSelector string) (*corev1.NodeList, error)
+}
 
-	cfg := new(action.Configuration)
-	client := action.NewGet(cfg)
-	if err := cfg.Init(settings.RESTClientGetter(), settings.Namespace(), os.Getenv("HELM_DRIVER"), Debug); err != nil {
-		return nil, err
-	}
-
-	res, err := client.Run(name)
-	if err != nil {
-		return nil, err
-	}
-	return res, nil
+// GetNodes is get a node list
+func (e *Kube) GetNodes(labelSelector string) (*corev1.NodeList, error) {
+	return e.client.CoreV1().Nodes().List(context.Background(), metav1.ListOptions{LabelSelector: labelSelector})
 }

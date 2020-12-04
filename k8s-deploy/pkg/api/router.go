@@ -53,5 +53,8 @@ func Router(r *gin.Engine) {
 
 		namespace := new(Namespace)
 		namespace.Router(v1)
+
+		kubeLog := new(kubeLog)
+		kubeLog.Router(v1)
 	}
 }

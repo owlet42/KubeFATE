@@ -1,6 +1,22 @@
+/*
+ * Copyright 2019-2020 VMware, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ */
+
 package kube
 
 import (
+	"bufio"
 	"context"
 	"fmt"
 	"io"
@@ -11,10 +27,8 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/client-go/informers"
-	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/kubernetes/fake"
 	"k8s.io/client-go/tools/cache"
 )
@@ -89,89 +103,32 @@ func TestGetPodLog(t *testing.T) {
 
 }
 
-func TestKube_GetLog(t *testing.T) {
-	type fields struct {
-		client *kubernetes.Clientset
-	}
-	type args struct {
-		name      string
-		namespace string
-		labels    labels.Labels
-	}
-	tests := []struct {
-		name   string
-		fields fields
-		args   args
-	}{
-		// TODO: Add test cases.
-		{
-			name: "",
-			fields: fields{
-				client: nil,
-			},
-			args: args{},
-		},
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			e := KUBE
-			e.client = fake.NewSimpleClientset()
-			e.GetLog(tt.args.name, tt.args.namespace, tt.args.labels)
-		})
-	}
-}
+func TestKube_GetPodLogs(t *testing.T) {
+	// GetPodLogs GetPodLogs
+	rest := KUBE.client.CoreV1().Pods("fate-9999").GetLogs("python-66fd9c4cb5-lw2sc",
+		&corev1.PodLogOptions{Container: "python", Follow: true})
 
-func TestKube_getPodLogs(t *testing.T) {
-	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
-	kube := KUBE
-	kube.client = fake.NewSimpleClientset()
-	fmt.Println("get client")
-	informers := informers.NewSharedInformerFactory(kube.client, 0)
-	podInformer := informers.Core().V1().Pods().Informer()
-
-	podInformer.AddEventHandler(&cache.ResourceEventHandlerFuncs{
-		AddFunc: func(obj interface{}) {
-			pod := obj.(*v1.Pod)
-			t.Logf("pod added: %s/%s", pod.Namespace, pod.Name)
-		},
-	})
-
-	informers.Start(ctx.Done())
-	cache.WaitForCacheSync(ctx.Done(), podInformer.HasSynced)
-	type args struct {
-		container    string
-		podName      string
-		podNamespace string
+	podLogs, err := rest.Stream(KUBE.ctx)
+	if err != nil {
+		panic(err)
 	}
-	tests := []struct {
-		name string
-		e    *Kube
-		args args
-		want string
-	}{
-		// TODO: Add test cases.
-		{
-			name: "",
-			e:    &kube,
-			args: args{
-				container:    "my-pod",
-				podName:      "my-pod",
-				podNamespace: "test-ns",
-			},
-			want: "",
-		},
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			p := &v1.Pod{ObjectMeta: metav1.ObjectMeta{Name: "my-pod"}}
-			_, err := tt.e.client.CoreV1().Pods("test-ns").Create(context.TODO(), p, metav1.CreateOptions{})
-			if err != nil {
-				t.Fatalf("error injecting pod add: %v", err)
+	defer podLogs.Close()
+
+	r := bufio.NewReader(podLogs)
+
+	for {
+		bytes, err := r.ReadByte()
+
+		if err != nil {
+			if err != io.EOF {
+				panic(err)
 			}
-			if got := tt.e.getPodLogs(tt.args.container, tt.args.podName, tt.args.podNamespace); got != tt.want {
-				t.Errorf("Kube.getPodLogs() = %v, want %v", got, tt.want)
-			}
-		})
+			fmt.Println("io.EOF")
+			return
+		}
+
+		fmt.Printf("%s", string(bytes))
+
 	}
+
 }

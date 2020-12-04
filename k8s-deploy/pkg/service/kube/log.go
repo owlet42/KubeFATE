@@ -1,58 +1,40 @@
+/*
+ * Copyright 2019-2020 VMware, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ */
+
 package kube
 
 import (
-	"bytes"
-	"context"
-	"fmt"
 	"io"
-	"os"
 
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-
-	"github.com/pkg/errors"
 	corev1 "k8s.io/api/core/v1"
-	"k8s.io/apimachinery/pkg/labels"
 )
 
-func (e *Kube) GetLog(name, namespace string, labels labels.Labels) {
-
-	pod, err := e.client.CoreV1().Pods(namespace).List(context.Background(), metav1.ListOptions{})
-	podName := pod.Items[0].ObjectMeta.Name
-	containerName := pod.Items[0].Spec.Containers[0].Name
-	fmt.Println("podName", podName)
-	fmt.Println("containerName", containerName)
-	fmt.Println("namespace", namespace)
-
-	logReader, err := e.client.CoreV1().Pods(namespace).GetLogs(podName, &corev1.PodLogOptions{Container: containerName}).Stream(context.Background())
-	if err != nil {
-		fmt.Println(err)
-		return
-	}
-
-	fmt.Fprintf(os.Stdout, "POD LOGS: %s\n", podName)
-	_, err = io.Copy(os.Stdout, logReader)
-	fmt.Fprintln(os.Stdout)
-	if err != nil {
-		fmt.Println(errors.Wrapf(err, "unable to write pod logs for %s", podName))
-		return
-	}
-	return
+// Log interface
+type Log interface {
+	GetPodLogs(namespace, podName, container string, follow bool) (io.ReadCloser, error)
 }
 
-func (e *Kube) getPodLogs(container, podName, podNamespace string) string {
+// GetPodLogs GetPodLogs
+func (e *Kube) GetPodLogs(namespace, podName, container string, follow bool) (io.ReadCloser, error) {
+	rest := e.client.CoreV1().Pods(namespace).GetLogs(podName, &corev1.PodLogOptions{Container: container, Follow: follow})
 
-	podLogs, err := e.client.CoreV1().Pods(podNamespace).GetLogs(podName, &corev1.PodLogOptions{Container: container}).Stream(context.Background())
+	podLogs, err := rest.Stream(e.ctx)
 	if err != nil {
-		return "error in opening stream: " + err.Error()
+		return nil, err
 	}
-	defer podLogs.Close()
+	//defer podLogs.Close()
 
-	buf := new(bytes.Buffer)
-	_, err = io.Copy(buf, podLogs)
-	if err != nil {
-		return "error in copy information from podLogs to buf"
-	}
-	str := buf.String()
-
-	return str
+	return podLogs, nil
 }

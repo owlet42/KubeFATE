@@ -14,3 +14,18 @@
  */
 
 package kube
+
+import (
+	corev1 "k8s.io/api/core/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+)
+
+// Services interface
+type Services interface {
+	GetServices(namespace, labelSelector string) (*corev1.ServiceList, error)
+}
+
+// GetServices is get Services list
+func (e *Kube) GetServices(namespace, labelSelector string) (*corev1.ServiceList, error) {
+	return e.client.CoreV1().Services(namespace).List(e.ctx, metav1.ListOptions{LabelSelector: labelSelector})
+}

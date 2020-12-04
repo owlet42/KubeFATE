@@ -73,7 +73,7 @@ func TestKube_GetPods(t *testing.T) {
 				t.Fatalf("error injecting pod add: %v", err)
 			}
 
-			got, err := tt.e.GetPods(tt.args.name, tt.args.namespace, tt.args.LabelSelector)
+			got, err := tt.e.GetPods(tt.args.namespace, tt.args.LabelSelector)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("Kube.GetPods() error = %v, wantErr %v", err, tt.wantErr)
 				return

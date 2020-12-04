@@ -24,14 +24,13 @@ import (
 	"k8s.io/client-go/kubernetes"
 )
 
-//type Kube interface{
-//	kubernetes.Interface
-//}
+// Kube struct
 type Kube struct {
 	client kubernetes.Interface
 	ctx    context.Context
 }
 
+// KUBE Kube
 var KUBE Kube
 
 func getClientset() (*kubernetes.Clientset, error) {

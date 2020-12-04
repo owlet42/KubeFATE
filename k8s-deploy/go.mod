@@ -8,7 +8,6 @@ require (
 	github.com/dgrijalva/jwt-go v3.2.0+incompatible
 	github.com/gin-contrib/logger v0.0.2
 	github.com/gin-gonic/gin v1.6.3
-	github.com/go-delve/delve v1.5.0 // indirect
 	github.com/gofrs/flock v0.7.1
 	github.com/gosuri/uitable v0.0.4
 	github.com/hashicorp/golang-lru v0.5.4 // indirect
@@ -24,9 +23,11 @@ require (
 	github.com/prometheus/client_golang v1.7.0 // indirect
 	github.com/rs/zerolog v1.19.0
 	github.com/satori/go.uuid v1.2.0
+	github.com/sirupsen/logrus v1.6.0 // indirect
 	github.com/spf13/viper v1.7.0
 	github.com/urfave/cli/v2 v2.2.0
 	golang.org/x/crypto v0.0.0-20200622213623-75b288015ac9
+	golang.org/x/net v0.0.0-20200324143707-d3edc9973b7e
 	gopkg.in/check.v1 v1.0.0-20200227125254-8fa46927fb4f // indirect
 	gopkg.in/yaml.v2 v2.2.8
 	helm.sh/helm/v3 v3.2.4

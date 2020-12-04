@@ -12,37 +12,29 @@
  * limitations under the License.
  *
  */
+
 package service
 
 import (
-	"context"
+	"errors"
 	"fmt"
 
-	v1 "k8s.io/api/core/v1"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	corev1 "k8s.io/api/core/v1"
 )
 
-func GetPods(namespace, LabelSelector string) (*v1.PodList, error) {
-	clientset, err := getClientset()
-	if err != nil {
-		fmt.Println(err)
-	}
-
-	pods, err := clientset.CoreV1().Pods(namespace).List(context.Background(), metav1.ListOptions{LabelSelector: LabelSelector})
-	return pods, err
-}
-
+// GetClusterPodStatus GetClusterPodStatus
 func GetClusterPodStatus(name, namespace string) (map[string]string, error) {
-	var labelSelector string
-	labelSelector = fmt.Sprintf("name=%s", name)
-	list, err := GetPods(namespace, labelSelector)
+
+	list, err := KubeClient.GetPods(namespace, getLabelSelector(namespace, name))
 	if err != nil {
 		return nil, err
 	}
 
 	return GetPodStatus(list), nil
 }
-func GetPodStatus(pods *v1.PodList) map[string]string {
+
+//GetPodStatus GetPodStatus
+func GetPodStatus(pods *corev1.PodList) map[string]string {
 
 	status := make(map[string]string)
 	for _, v := range pods.Items {
@@ -66,6 +58,7 @@ func GetPodStatus(pods *v1.PodList) map[string]string {
 
 }
 
+// CheckClusterStatus CheckClusterStatus
 func CheckClusterStatus(ClusterStatus map[string]string) bool {
 	if len(ClusterStatus) == 0 {
 		return false
@@ -79,10 +72,10 @@ func CheckClusterStatus(ClusterStatus map[string]string) bool {
 	return clusterStatusOk
 }
 
+// GetPodList GetPodList
 func GetPodList(name, namespace string) ([]string, error) {
-	var labelSelector string
-	labelSelector = fmt.Sprintf("name=%s", name)
-	list, err := GetPods(namespace, labelSelector)
+
+	list, err := KubeClient.GetPods(namespace, getLabelSelector(namespace, name))
 	if err != nil {
 		return nil, err
 	}
@@ -91,4 +84,30 @@ func GetPodList(name, namespace string) ([]string, error) {
 		podList = append(podList, v.GetName())
 	}
 	return podList, nil
+}
+
+// GetPodNameByModule is Get Pod By Module
+func GetPodNameByModule(namespace, name, modules string) (string, error) {
+	labelSelector := getLabelSelector(namespace, name)
+	podList, err := KubeClient.GetPods(namespace, labelSelector)
+	if err != nil {
+		return "", err
+	}
+
+	for _, pod := range podList.Items {
+		for _, container := range pod.Spec.Containers {
+			if container.Name == modules {
+				return pod.Name, nil
+			}
+		}
+	}
+
+	return "", errors.New("module no find")
+}
+
+// getLabelSelector is Get LabelSelector
+// This part depends on matchLabels of helm hart _helpers.tpl file
+func getLabelSelector(namespace, name string) string {
+
+	return fmt.Sprintf("name=%s", name)
 }

@@ -12,36 +12,20 @@
  * limitations under the License.
  *
  */
+
 package service
 
-import (
-	"reflect"
-	"testing"
-)
+// GetNodeIP get a node ip
+func GetNodeIP() ([]string, error) {
 
-func TestGetNodeIp(t *testing.T) {
-	tests := []struct {
-		name    string
-		want    []int32
-		wantErr bool
-	}{
-		// TODO: Add test cases.
-		{
-			name:    "",
-			want:    nil,
-			wantErr: false,
-		},
+	svcs, err := KubeClient.GetNodes("")
+	if err != nil {
+		return nil, err
 	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			got, err := GetNodeIp()
-			if (err != nil) != tt.wantErr {
-				t.Errorf("GetNodeIp() error = %v, wantErr %v", err, tt.wantErr)
-				return
-			}
-			if !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("GetNodeIp() = %v, want %v", got, tt.want)
-			}
-		})
+
+	var nodeIP []string
+	for _, v := range svcs.Items {
+		nodeIP = append(nodeIP, v.Status.Addresses[0].Address)
 	}
+	return nodeIP, nil
 }
