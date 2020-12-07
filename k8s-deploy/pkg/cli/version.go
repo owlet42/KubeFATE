@@ -72,7 +72,7 @@ func GetServiceVersion() (string, error) {
 	Authorization := fmt.Sprintf("Bearer %s", token)
 
 	request.Header.Add("Authorization", Authorization)
-
+	request.Header.Add("user-agent", "kubefate")
 	resp, err := http.DefaultClient.Do(request)
 	if err != nil {
 		return "", err
