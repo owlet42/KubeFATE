@@ -111,3 +111,27 @@ func getLabelSelector(namespace, name string) string {
 
 	return fmt.Sprintf("name=%s", name)
 }
+
+// getPodContainerList getPodContainerList
+// return map[ContainerName]podName
+func getPodContainerList(name, namespace, container string) (map[string]string, error) {
+
+	list, err := KubeClient.GetPods(namespace, getLabelSelector(namespace, name))
+	if err != nil {
+		return nil, err
+	}
+	var podContainerList = make(map[string]string)
+	for _, v := range list.Items {
+		for _, vv := range v.Spec.Containers {
+			if container == "" {
+				podContainerList[vv.Name] = v.GetName()
+			} else {
+				if container == vv.Name {
+					podContainerList[vv.Name] = v.GetName()
+				}
+			}
+		}
+
+	}
+	return podContainerList, nil
+}

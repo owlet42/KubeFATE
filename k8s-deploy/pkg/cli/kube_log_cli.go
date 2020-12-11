@@ -55,8 +55,6 @@ func LogCommand() *cli.Command {
 			var module string
 			if c.Args().Len() > 1 {
 				module = c.Args().Get(1)
-			} else {
-				return errors.New("not module")
 			}
 
 			follow := c.Bool("follow")
@@ -102,7 +100,7 @@ func GetModuleLog(uuid, module string) (string, error) {
 	Authorization := fmt.Sprintf("Bearer %s", token)
 
 	request.Header.Add("Authorization", Authorization)
-
+	request.Header.Add("user-agent", "kubefate")
 	resp, err := http.DefaultClient.Do(request)
 	if err != nil {
 		return "", err
@@ -111,6 +109,7 @@ func GetModuleLog(uuid, module string) (string, error) {
 	if err != nil {
 		return "", err
 	}
+	log.Debug().Int("StatusCode", resp.StatusCode).Interface("body",resp.Body).Msg("resp Status Code")
 
 	if resp.StatusCode != 200 {
 		type LogResultErr struct {
@@ -161,7 +160,6 @@ func GetModuleLogFollow(uuid, module string) error {
 
 	config, err := websocket.NewConfig(Url, "http://"+serviceUrl+"/")
 	config.Header.Add("user-agent", "kubefate")
-
 	token, err := getToken()
 	if err != nil {
 		return err

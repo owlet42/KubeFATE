@@ -21,16 +21,16 @@ func GetClusterInfo(name, namespace string) (map[string]interface{}, error) {
 	if err != nil {
 		return nil, err
 	}
-	port, err := GetProxySvcNodePorts(name, GetDefaultNamespace(namespace))
+	port, err := GetProxySvcNodePorts(name, getDefaultNamespace(namespace))
 	if err != nil {
 		return nil, err
 	}
-	podList, err := GetPodList(name, GetDefaultNamespace(namespace))
+	podList, err := GetPodList(name, getDefaultNamespace(namespace))
 	if err != nil {
 		return nil, err
 	}
 
-	ingressURLList, err := GetIngressURLList(name, GetDefaultNamespace(namespace))
+	ingressURLList, err := GetIngressURLList(name, getDefaultNamespace(namespace))
 	if err != nil {
 		return nil, err
 	}

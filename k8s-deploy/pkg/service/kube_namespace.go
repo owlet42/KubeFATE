@@ -53,8 +53,8 @@ func CheckNamespace(namespace string) error {
 
 }
 
-// GetDefaultNamespace Get Default Namespace
-func GetDefaultNamespace(namespace string) string {
+// getDefaultNamespace Get Default Namespace
+func getDefaultNamespace(namespace string) string {
 	if namespace != "" {
 		return namespace
 	}

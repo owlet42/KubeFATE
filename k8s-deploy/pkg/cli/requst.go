@@ -48,6 +48,7 @@ func getToken() (string, error) {
 	}
 
 	var resp *http.Response
+	Request.Header.Add("user-agent", "kubefate")
 	resp, err = http.DefaultClient.Do(Request)
 	if err != nil {
 		return "", err

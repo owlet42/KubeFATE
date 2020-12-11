@@ -16,10 +16,7 @@
 package api
 
 import (
-	"bufio"
 	"errors"
-	"io"
-	"time"
 
 	"github.com/FederatedAI/KubeFATE/k8s-deploy/pkg/modules"
 	"github.com/FederatedAI/KubeFATE/k8s-deploy/pkg/service"
@@ -41,6 +38,7 @@ func (e *kubeLog) Router(r *gin.RouterGroup) {
 	kubeLog := r.Group("/log")
 	kubeLog.Use(authMiddleware.MiddlewareFunc())
 	{
+		kubeLog.GET("/:clusterID", e.getClusterLog)
 		kubeLog.GET("/:clusterID/:containerName", e.getClusterLog)
 		kubeLog.GET("/:clusterID/:containerName/ws", e.getClusterLogWs)
 	}
@@ -70,20 +68,22 @@ func (_ *kubeLog) getClusterLog(c *gin.Context) {
 		return
 	}
 
-	containerLogs, err := getModuleLogs(cluster, containerName)
+	buf, err := service.GetLogs(&service.LogChanArgs{
+		Name:      cluster.Name,
+		Namespace: cluster.NameSpace,
+		Container: containerName,
+		Follow:    false,
+	})
+
 	if err != nil {
 		log.Error().Err(err).Msg("request error")
 		c.JSON(500, gin.H{"error": err.Error()})
 		return
 	}
 
-	log.Debug().Int("data.size", len(containerLogs)).Msg("getClusterLog success")
-	c.JSON(200, gin.H{"data": containerLogs, "msg": "getClusterLog success"})
+	log.Debug().Int("data.size", buf.Len()).Msg("getClusterLog success")
+	c.JSON(200, gin.H{"data": buf.String(), "msg": "getClusterLog success"})
 
-}
-
-func getModuleLogs(cluster modules.Cluster, containerName string) (string, error) {
-	return service.GetLogs(cluster.NameSpace, cluster.Name, containerName)
 }
 
 func (_ *kubeLog) getClusterLogWs(c *gin.Context) {
@@ -96,11 +96,6 @@ func (_ *kubeLog) getClusterLogWs(c *gin.Context) {
 	}
 
 	containerName := c.Param("containerName")
-	if clusterID == "" {
-		log.Error().Err(errors.New("not exit containerName")).Msg("request error")
-		c.JSON(400, gin.H{"error": "not exit containerName"})
-		return
-	}
 
 	hc := modules.Cluster{Uuid: clusterID}
 	cluster, err := hc.Get()
@@ -110,64 +105,17 @@ func (_ *kubeLog) getClusterLogWs(c *gin.Context) {
 		return
 	}
 
-	logRead, err := service.GetLogFollow(cluster.NameSpace, cluster.Name, containerName)
-	if err != nil {
-		log.Error().Err(err).Str("uuid", clusterID).Msg("get cluster error")
-		c.JSON(500, gin.H{"error": "get cluster error, " + err.Error()})
-		return
-	}
-	defer logRead.Close()
-
-	log.Debug().Msg("get log follow reader success")
-
 	handler := websocket.Handler(func(c *websocket.Conn) {
+		log.Debug().Msg("get log websocket reader success")
+		defer log.Debug().Msg("websocket close")
 
-		msg := make(chan string)
-		stop := make(chan bool)
-		go readString(logRead, msg, stop)
-
-		for {
-			select {
-			case l := <-msg:
-				err = websocket.Message.Send(c, l)
-				if err != nil {
-					log.Err(err).Msg("Write")
-					return
-				}
-				// log.Debug().Str("l", l).Msg("send : ")
-			case <-stop:
-				c.Close()
-				return
-			default:
-				err = websocket.Message.Send(c, "")
-				if err != nil {
-					log.Warn().Err(err).Msg("Msg Send error")
-					return
-				}
-				time.Sleep(time.Millisecond)
-			}
-
-		}
-
+		err := service.WriteLog(c, &service.LogChanArgs{
+			Name:      cluster.Name,
+			Namespace: cluster.NameSpace,
+			Container: containerName,
+			Follow:    true,
+		})
+		log.Warn().Err(err).Msg("writeLog err, if the log stream is closed, you can ignore this prompt")
 	})
 	handler.ServeHTTP(c.Writer, c.Request)
-
-}
-
-func readString(logRead io.ReadCloser, msg chan string, stop chan bool) error {
-	r := bufio.NewReader(logRead)
-	for {
-		msgstr, err := r.ReadString('\n')
-		if err != nil {
-			if err != io.EOF {
-				log.Warn().Err(err).Msg("ReadLine form logRead error")
-				return err
-			}
-			log.Debug().Err(err).Msg("ReadString io.EOF")
-			stop <- true
-			return nil
-		}
-		msg <- msgstr
-	}
-
 }

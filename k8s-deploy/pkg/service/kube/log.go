@@ -17,18 +17,33 @@ package kube
 
 import (
 	"io"
+	"time"
 
 	corev1 "k8s.io/api/core/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 // Log interface
 type Log interface {
-	GetPodLogs(namespace, podName, container string, follow bool) (io.ReadCloser, error)
+	GetPodLogs(namespace, podName string, args *PodLogArgs) (io.ReadCloser, error)
+}
+
+type PodLogArgs struct {
+	Container                    string
+	Follow                       bool
+	Previous                     bool
+	SinceSeconds                 *int64
+	SinceTime                    time.Time
+	Timestamps                   bool
+	TailLines                    *int64
+	LimitBytes                   *int64
+	InsecureSkipTLSVerifyBackend bool
 }
 
 // GetPodLogs GetPodLogs
-func (e *Kube) GetPodLogs(namespace, podName, container string, follow bool) (io.ReadCloser, error) {
-	rest := e.client.CoreV1().Pods(namespace).GetLogs(podName, &corev1.PodLogOptions{Container: container, Follow: follow})
+func (e *Kube) GetPodLogs(namespace, podName string, args *PodLogArgs) (io.ReadCloser, error) {
+
+	rest := e.client.CoreV1().Pods(namespace).GetLogs(podName, getPodLogOptions(args))
 
 	podLogs, err := rest.Stream(e.ctx)
 	if err != nil {
@@ -37,4 +52,20 @@ func (e *Kube) GetPodLogs(namespace, podName, container string, follow bool) (io
 	//defer podLogs.Close()
 
 	return podLogs, nil
+}
+
+func getPodLogOptions(podLogArgs *PodLogArgs) *corev1.PodLogOptions {
+	return &corev1.PodLogOptions{
+		Container:    podLogArgs.Container,
+		Follow:       podLogArgs.Follow,
+		Previous:     podLogArgs.Previous,
+		SinceSeconds: podLogArgs.SinceSeconds,
+		SinceTime: &metav1.Time{
+			Time: podLogArgs.SinceTime,
+		},
+		Timestamps:                   podLogArgs.Timestamps,
+		TailLines:                    podLogArgs.TailLines,
+		LimitBytes:                   podLogArgs.LimitBytes,
+		InsecureSkipTLSVerifyBackend: podLogArgs.InsecureSkipTLSVerifyBackend,
+	}
 }
