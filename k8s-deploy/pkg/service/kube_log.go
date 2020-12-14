@@ -31,6 +31,8 @@ import (
 // GetLogs is Get container Logs
 func GetLogs(args *LogChanArgs) (*bytes.Buffer, error) {
 
+	log.Debug().Interface("args", args).Msg("GetLogs")
+
 	var logReadList = make(map[string]io.ReadCloser)
 
 	list, err := getLogRead(args)
@@ -159,7 +161,7 @@ type LogChanArgs struct {
 // WriteLog WriteLog
 func WriteLog(w *websocket.Conn, args *LogChanArgs) (err error) {
 	defer w.Close()
-
+	log.Debug().Interface("args", args).Msg("WriteLog")
 	queue := utils.NewQueue(128)
 
 	var logReadList = make(map[string]io.ReadCloser)

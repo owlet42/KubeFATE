@@ -17,6 +17,7 @@ package api
 
 import (
 	"errors"
+	"time"
 
 	"github.com/FederatedAI/KubeFATE/k8s-deploy/pkg/modules"
 	"github.com/FederatedAI/KubeFATE/k8s-deploy/pkg/service"
@@ -28,9 +29,16 @@ import (
 type kubeLog struct {
 }
 
-type logResult struct {
-	data string
-	msg  string
+type RequestArgs struct {
+	Container                    string    `form:"container"`
+	Follow                       bool      `form:"follow"`
+	Previous                     bool      `form:"previous"`
+	SinceSeconds                 *int64    `form:"since"`
+	SinceTime                    time.Time `form:"since-time" time_format:"2006-01-02T15:04:05Z07:00"`
+	Timestamps                   bool      `form:"timestamps"`
+	TailLines                    *int64    `form:"tail"`
+	LimitBytes                   *int64    `form:"limit-bytes"`
+	InsecureSkipTLSVerifyBackend bool
 }
 
 func (e *kubeLog) Router(r *gin.RouterGroup) {
@@ -39,8 +47,7 @@ func (e *kubeLog) Router(r *gin.RouterGroup) {
 	kubeLog.Use(authMiddleware.MiddlewareFunc())
 	{
 		kubeLog.GET("/:clusterID", e.getClusterLog)
-		kubeLog.GET("/:clusterID/:containerName", e.getClusterLog)
-		kubeLog.GET("/:clusterID/:containerName/ws", e.getClusterLogWs)
+		kubeLog.GET("/:clusterID/ws", e.getClusterLogWs)
 	}
 }
 
@@ -53,10 +60,10 @@ func (_ *kubeLog) getClusterLog(c *gin.Context) {
 		return
 	}
 
-	containerName := c.Param("containerName")
-	if clusterID == "" {
-		log.Error().Err(errors.New("not exit containerName")).Msg("request error")
-		c.JSON(400, gin.H{"error": "not exit containerName"})
+	requestArgs := new(RequestArgs)
+	if err := c.ShouldBind(&requestArgs); err != nil {
+		log.Error().Err(err).Msg("request error")
+		c.JSON(400, gin.H{"error": err.Error()})
 		return
 	}
 
@@ -69,10 +76,17 @@ func (_ *kubeLog) getClusterLog(c *gin.Context) {
 	}
 
 	buf, err := service.GetLogs(&service.LogChanArgs{
-		Name:      cluster.Name,
-		Namespace: cluster.NameSpace,
-		Container: containerName,
-		Follow:    false,
+		Name:                         cluster.Name,
+		Namespace:                    cluster.NameSpace,
+		Container:                    requestArgs.Container,
+		Follow:                       false,
+		Previous:                     requestArgs.Previous,
+		SinceSeconds:                 requestArgs.SinceSeconds,
+		SinceTime:                    requestArgs.SinceTime,
+		Timestamps:                   requestArgs.Timestamps,
+		TailLines:                    requestArgs.TailLines,
+		LimitBytes:                   requestArgs.LimitBytes,
+		InsecureSkipTLSVerifyBackend: requestArgs.InsecureSkipTLSVerifyBackend,
 	})
 
 	if err != nil {
@@ -95,7 +109,12 @@ func (_ *kubeLog) getClusterLogWs(c *gin.Context) {
 		return
 	}
 
-	containerName := c.Param("containerName")
+	requestArgs := new(RequestArgs)
+	if err := c.ShouldBind(&requestArgs); err != nil {
+		log.Error().Err(err).Msg("request error")
+		c.JSON(400, gin.H{"error": err.Error()})
+		return
+	}
 
 	hc := modules.Cluster{Uuid: clusterID}
 	cluster, err := hc.Get()
@@ -110,10 +129,17 @@ func (_ *kubeLog) getClusterLogWs(c *gin.Context) {
 		defer log.Debug().Msg("websocket close")
 
 		err := service.WriteLog(c, &service.LogChanArgs{
-			Name:      cluster.Name,
-			Namespace: cluster.NameSpace,
-			Container: containerName,
-			Follow:    true,
+			Name:                         cluster.Name,
+			Namespace:                    cluster.NameSpace,
+			Container:                    requestArgs.Container,
+			Follow:                       true,
+			Previous:                     requestArgs.Previous,
+			SinceSeconds:                 requestArgs.SinceSeconds,
+			SinceTime:                    requestArgs.SinceTime,
+			Timestamps:                   requestArgs.Timestamps,
+			TailLines:                    requestArgs.TailLines,
+			LimitBytes:                   requestArgs.LimitBytes,
+			InsecureSkipTLSVerifyBackend: requestArgs.InsecureSkipTLSVerifyBackend,
 		})
 		log.Warn().Err(err).Msg("writeLog err, if the log stream is closed, you can ignore this prompt")
 	})

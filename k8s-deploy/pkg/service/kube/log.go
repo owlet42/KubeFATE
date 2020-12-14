@@ -60,9 +60,14 @@ func getPodLogOptions(podLogArgs *PodLogArgs) *corev1.PodLogOptions {
 		Follow:       podLogArgs.Follow,
 		Previous:     podLogArgs.Previous,
 		SinceSeconds: podLogArgs.SinceSeconds,
-		SinceTime: &metav1.Time{
-			Time: podLogArgs.SinceTime,
-		},
+		SinceTime: func() *metav1.Time {
+			if podLogArgs.SinceTime.IsZero() || podLogArgs.SinceSeconds != nil {
+				return nil
+			}
+			return &metav1.Time{
+				Time: podLogArgs.SinceTime,
+			}
+		}(),
 		Timestamps:                   podLogArgs.Timestamps,
 		TailLines:                    podLogArgs.TailLines,
 		LimitBytes:                   podLogArgs.LimitBytes,

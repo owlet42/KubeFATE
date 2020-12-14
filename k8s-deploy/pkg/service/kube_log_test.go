@@ -20,6 +20,7 @@ import (
 	"io"
 	"reflect"
 	"testing"
+	"time"
 
 	"github.com/rs/zerolog/log"
 )
@@ -39,9 +40,12 @@ func TestGetLogs(t *testing.T) {
 			name: "",
 			args: args{
 				args: &LogChanArgs{
-					Name:      "fate-9999",
-					Namespace: "fate-9999",
-					Container: "python",
+					Name:       "fate-9999",
+					Namespace:  "fate-9999",
+					Container:  "python",
+					TailLines:  func() *int64 { a := int64(10); return &a }(),
+					Timestamps: true,
+					SinceTime:  time.Now().Add(-10*time.Hour),
 				},
 			},
 			want:    nil,

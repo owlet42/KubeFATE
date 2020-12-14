@@ -79,7 +79,8 @@ data:
     <source>
       @type tail
       path /data/projects/fate/eggroll/logs/*/*.*
-      pos_file /data/projects/fate/eggroll/log.pos
+      exclude_path ["/data/projects/fate/eggroll/logs/eggroll/"]
+      pos_file /data/projects/fate/eggroll/logs/log.pos
       tag eggroll
       multiline_flush_interval 2s
       refresh_interval 5s
@@ -114,7 +115,7 @@ spec:
 {{ include "fate.labels" $root | indent 8 }}
     spec:
       containers:
-        - name: fluentd
+        - name: {{ $nodemanager.name }}-eggrollpair
           image: fluent/fluentd:v1.11-debian-1
           volumeMounts:
           - name: eggroll-log
@@ -128,7 +129,16 @@ spec:
           command:
           - bash
           - -c
-          - "java -Dlog4j.configurationFile=$${EGGROLL_HOME}/conf/log4j2.properties -cp $${EGGROLL_HOME}/lib/*: com.webank.eggroll.core.Bootstrap --bootstraps com.webank.eggroll.core.resourcemanager.NodeManagerBootstrap -c $${EGGROLL_HOME}/conf/eggroll.properties -p 4671 -s 'EGGROLL_DEAMON'"
+          - |
+            set -x
+            mkdir -p /data/projects/fate/eggroll/logs/eggroll/
+            touch /data/projects/fate/eggroll/logs/eggroll/eggroll-audit.log
+            ln -sf /dev/stdout /data/projects/fate/eggroll/logs/eggroll/eggroll-audit.log
+            touch /data/projects/fate/eggroll/logs/eggroll/eggroll.jvm.log
+            ln -sf /dev/stdout /data/projects/fate/eggroll/logs/eggroll/eggroll.jvm.log
+            touch /data/projects/fate/eggroll/logs/eggroll/eggroll.jvm.err.log 
+            ln -sf /dev/stderr /data/projects/fate/eggroll/logs/eggroll/eggroll.jvm.err.log
+            java -Dlog4j.configurationFile=$${EGGROLL_HOME}/conf/log4j2.properties -cp $${EGGROLL_HOME}/lib/*: com.webank.eggroll.core.Bootstrap --bootstraps com.webank.eggroll.core.resourcemanager.NodeManagerBootstrap -c $${EGGROLL_HOME}/conf/eggroll.properties -p 4671 -s 'EGGROLL_DEAMON'
           ports:
             - containerPort: 4671
           volumeMounts:

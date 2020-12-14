@@ -23,6 +23,8 @@ import (
 	"io"
 	"io/ioutil"
 	"net/http"
+	"net/url"
+	"time"
 
 	"github.com/FederatedAI/KubeFATE/k8s-deploy/pkg/api"
 	"github.com/rs/zerolog/log"
@@ -41,6 +43,34 @@ func LogCommand() *cli.Command {
 				Value:   false,
 				Usage:   "Specify if the logs should be streamed.",
 			},
+			&cli.BoolFlag{
+				Name:  "previous",
+				Value: false,
+				Usage: "If true, print the logs for the previous instance of the container in a pod if it exists.",
+			},
+			&cli.Int64Flag{
+				Name:  "since",
+				Usage: "Only return logs newer than a relative duration like 5s, 2m, or 3h. Defaults to all logs. Only one of since-time since may be used.",
+			},
+			&cli.TimestampFlag{
+				Name:   "since-time",
+				Layout: "2006-01-02T15:04:05",
+				Usage:  "Only return logs after a specific date (RFC3339). Defaults to all logs. Only one of since-time since may be used.",
+			},
+			&cli.BoolFlag{
+				Name:  "timestamps",
+				Usage: "Include timestamps on each line in the log output.",
+			},
+			&cli.Int64Flag{
+				Name:  "tail",
+				Value: -1,
+				Usage: "Lines of recent log file to display. Defaults to -1 with no selector, showing all log lines otherwise 10, if a selector is provided.",
+			},
+			&cli.Int64Flag{
+				Name:  "limit-bytes",
+				Value: 0,
+				Usage: "Maximum bytes of logs to return. Defaults to no limit.",
+			},
 		},
 		Usage: "Get this cluster module log",
 		Action: func(c *cli.Context) error {
@@ -52,17 +82,39 @@ func LogCommand() *cli.Command {
 				return errors.New("not uuid")
 			}
 
-			var module string
-			if c.Args().Len() > 1 {
-				module = c.Args().Get(1)
+			args := url.Values{}
+			args.Set("container", fmt.Sprint(c.Args().Get(1)))
+			if c.Bool("previous") {
+				args.Set("previous", "true")
 			}
+			if c.Int64("since") != 0 {
+				//TODO: 2s => 2 1m => 60 1h => 3600
+				args.Set("since", fmt.Sprint(c.Int64("since")))
+			}
+
+			if c.Timestamp("since-time") != nil {
+				args.Set("since-time", fmt.Sprint(c.Timestamp("since-time").Format(time.RFC3339)))
+			}
+
+			if c.Bool("timestamps") {
+				args.Set("timestamps", "true")
+			}
+			if c.Int64("tail") != -1 {
+				args.Set("tail", fmt.Sprint(c.Int64("tail")))
+			}
+			if c.Int64("limit-bytes") != 0 {
+				args.Set("limit-bytes", fmt.Sprint(c.Int64("limit-bytes")))
+			}
+
+			log.Debug().Str("args", args.Encode()).Msg("args.Encode")
 
 			follow := c.Bool("follow")
+
 			if follow {
-				return GetModuleLogFollow(uuid, module)
+				return GetModuleLogFollow(uuid, args.Encode())
 			}
 
-			kubeLog, err := GetModuleLog(uuid, module)
+			kubeLog, err := GetModuleLog(uuid, args.Encode())
 			if err != nil {
 				return err
 			}
@@ -72,7 +124,7 @@ func LogCommand() *cli.Command {
 	}
 }
 
-func GetModuleLog(uuid, module string) (string, error) {
+func GetModuleLog(uuid, args string) (string, error) {
 	r := &Request{
 		Type: "GET",
 		Path: "log",
@@ -84,7 +136,7 @@ func GetModuleLog(uuid, module string) (string, error) {
 	if serviceUrl == "" {
 		serviceUrl = "localhost:8080/"
 	}
-	Url := "http://" + serviceUrl + "/" + apiVersion + r.Path + fmt.Sprintf("/%s/%s", uuid, module)
+	Url := "http://" + serviceUrl + "/" + apiVersion + r.Path + fmt.Sprintf("/%s?%s", uuid, args)
 
 	body := bytes.NewReader(r.Body)
 	log.Debug().Str("Type", r.Type).Str("url", Url).Msg("Request")
@@ -109,7 +161,7 @@ func GetModuleLog(uuid, module string) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	log.Debug().Int("StatusCode", resp.StatusCode).Interface("body",resp.Body).Msg("resp Status Code")
+	log.Debug().Int("StatusCode", resp.StatusCode).Interface("body", resp.Body).Msg("resp Status Code")
 
 	if resp.StatusCode != 200 {
 		type LogResultErr struct {
@@ -142,7 +194,7 @@ func GetModuleLog(uuid, module string) (string, error) {
 	return LogResult.Data, err
 }
 
-func GetModuleLogFollow(uuid, module string) error {
+func GetModuleLogFollow(uuid, args string) error {
 
 	r := &Request{
 		Type: "GET",
@@ -155,7 +207,7 @@ func GetModuleLogFollow(uuid, module string) error {
 	if serviceUrl == "" {
 		serviceUrl = "localhost:8080/"
 	}
-	Url := "ws://" + serviceUrl + "/" + apiVersion + r.Path + fmt.Sprintf("/%s/%s/ws", uuid, module)
+	Url := "ws://" + serviceUrl + "/" + apiVersion + r.Path + fmt.Sprintf("/%s/ws?%s", uuid, args)
 	log.Debug().Str("Url", Url).Msg("ok")
 
 	config, err := websocket.NewConfig(Url, "http://"+serviceUrl+"/")
