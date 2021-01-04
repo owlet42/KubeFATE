@@ -2,7 +2,7 @@
 dir=$(dirname $0)
 source $dir/init.sh
 
-EXPECT_PYTHON_STATUS=' * Running on http://0.0.0.0:9380/ (Press CTRL+C to quit)'
+EXPECT_PYTHON_STATUS=' * Running on http://192.167.0.100:9380/ (Press CTRL+C to quit)'
 
 echo "# config prepare"
 target_dir=/data/projects/fate
