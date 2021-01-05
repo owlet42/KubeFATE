@@ -22,6 +22,12 @@ kubectl apply -f kubefate.yaml
 MAX_TRY=60
 for (( i=1; i<=$MAX_TRY; i++ ))
 do
+    if [ $i -eq $MAX_TRY ]
+    then
+       echo "kubefate deploy timeOut, please check"
+       kubectl get pod -n kube-fate
+       exit 1
+    fi
     status=$(kubectl get pod -l fate=kubefate -n kube-fate -o jsonpath='{.items[0].status.phase}')
     if [ $status == "Running" ]
     then
@@ -33,14 +39,25 @@ do
 done
 
 # check kubefate
-go build -buildmode=exe -o bin/kubefate.exe kubefate.go
+make
 
-export FATECLOUD_SERVICEURL=kubefate.net:31246
+# get ingress 80 nodeport
+ingressNodePort=$(kubectl -n ingress-nginx get svc/ingress-nginx-controller -o jsonpath='{.spec.ports[0].nodePort}')
 
+ingressPodName=$(kubectl -n ingress-nginx get pod -l app.kubernetes.io/component=controller -o jsonpath='{.items[0].metadata.name}')
+
+ingressNodeIp=$(kubectl -n ingress-nginx get pod/$ingressPodName -o jsonpath='{.status.hostIP}')
+
+# set host
+echo $ingressNodeIp kubefate.net >> /etc/hosts
+cat /etc/hosts
+# set SERVICEURL
+export FATECLOUD_SERVICEURL=kubefate.net:$ingressNodePort
+echo $FATECLOUD_SERVICEURL
 bin/kubefate version
 if [ $? -ne 0 ];
   then
-    echo "kubefate error"
+    echo "kubefate command line error, checkout ingress"
     exit 1
 fi
 # delete
