@@ -40,6 +40,7 @@ echo $ingressNodeIp kubefate.net >> /etc/hosts
 
 # set SERVICEURL
 echo -e "$INFO: check kubefate version"
+ingressNodePort=$(kubectl -n ingress-nginx get svc/ingress-nginx-controller -o jsonpath='{.spec.ports[0].nodePort}')
 export FATECLOUD_SERVICEURL=kubefate.net:$ingressNodePort
 echo $FATECLOUD_SERVICEURL
 bin/kubefate version
@@ -51,7 +52,7 @@ fi
 
 # create cluster
 echo -e "$INFO: Cluster Install"
-jobUUID=$(bin/kubefate cluster install -f cluster.yaml | sed "s/^.*=//g" )
+jobUUID=$(bin/kubefate cluster install -f cluster.yaml | sed "s/^.*=//g" | sed "s/\r//g")
 echo -e "DEBUG: jobUUID: $jobUUID"
 MAX_TRY=60
 for (( i=1; i<=$MAX_TRY; i++ ))
@@ -76,7 +77,7 @@ done
 
 # update cluster
 echo -e "$INFO: Cluster Update"
-jobUUID=$(bin/kubefate cluster update -f cluster-spark.yaml | sed "s/^.*=//g" )
+jobUUID=$(bin/kubefate cluster update -f cluster-spark.yaml | sed "s/^.*=//g"  | sed "s/\r//g")
 echo -e "DEBUG: jobUUID: $jobUUID"
 for (( i=1; i<=$MAX_TRY; i++ ))
 do
@@ -112,7 +113,7 @@ else
 fi
 # delete cluster
 echo -e "$INFO: Cluster Delete"
-jobUUID=$(bin/kubefate cluster delete $clusterUUID | sed "s/^.*=//g" )
+jobUUID=$(bin/kubefate cluster delete $clusterUUID | sed "s/^.*=//g"  | sed "s/\r//g")
 echo -e "DEBUG: jobUUID: $jobUUID"
 for (( i=1; i<=$MAX_TRY; i++ ))
 do
