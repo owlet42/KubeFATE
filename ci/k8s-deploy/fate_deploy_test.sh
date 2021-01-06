@@ -62,7 +62,7 @@ do
        bin/kubefate job describe $jobUUID
        exit 1
     fi
-    jobstatus=$(bin/kubefate job describe jobUUID | grep -w Status | awk '{print $2}' )
+    jobstatus=$(bin/kubefate job describe $jobUUID | grep -w Status | awk '{print $2}' )
     if [ $jobstatus == "Success" ]
     then
         echo -e "$Success: ClusterInstall job success"
