@@ -15,6 +15,10 @@ cd $dir/../../k8s-deploy
 # namespace and rbac
 kubectl apply -f rbac-config.yaml
 
+# 
+IMG=federatedai/kubefate:latest
+# set kubefate image:tag
+sed -i "s#image: federatedai/kubefate:.*#image: ${IMG}#g" kubefate.yaml
 # deploy kubefate
 kubectl apply -f kubefate.yaml
 
@@ -38,7 +42,23 @@ do
     sleep 3
 done
 
-# check kubefate
+# check go 
+go version
+if [ $? -ne 0 ];
+  then
+    echo "golang environment abnormal"
+    exit 1
+fi
+
+# check go 
+gcc -v
+if [ $? -ne 0 ];
+  then
+    echo "gcc environment abnormal"
+    exit 1
+fi
+
+# build kubefate
 make
 
 # get ingress 80 nodeport
@@ -50,7 +70,7 @@ ingressNodeIp=$(kubectl -n ingress-nginx get pod/$ingressPodName -o jsonpath='{.
 
 # set host
 echo $ingressNodeIp kubefate.net >> /etc/hosts
-cat /etc/hosts
+
 # set SERVICEURL
 export FATECLOUD_SERVICEURL=kubefate.net:$ingressNodePort
 echo $FATECLOUD_SERVICEURL
@@ -63,6 +83,9 @@ fi
 # delete
 kubectl delete -f kubefate.yaml
 kubectl delete -f rbac-config.yaml
+
+# clean host
+sed -i '$d' /etc/hosts
 # get k8s node ip (for NodePort)
 exit 0
 
