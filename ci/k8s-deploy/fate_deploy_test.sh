@@ -8,7 +8,7 @@ cd $dir/../../k8s-deploy
 
 echo -e "$INFO: kubefate Install"
 make install
-MAX_TRY=60
+MAX_TRY=120
 for (( i=1; i<=$MAX_TRY; i++ ))
 do
     if [ $i -eq $MAX_TRY ]
@@ -24,7 +24,7 @@ do
         break
     fi
     echo -e "# Current kubefate pod status: $status want Running"
-    sleep 3
+    sleep 2
 done
 
 # get ingress 80 nodeport
@@ -54,7 +54,7 @@ fi
 echo -e "$INFO: Cluster Install"
 jobUUID=$(bin/kubefate cluster install -f cluster.yaml | sed "s/^.*=//g" | sed "s/\r//g")
 echo -e "DEBUG: jobUUID: $jobUUID"
-MAX_TRY=60
+MAX_TRY=120
 for (( i=1; i<=$MAX_TRY; i++ ))
 do
     if [ $i -eq $MAX_TRY ]
@@ -70,7 +70,7 @@ do
         break
     fi
     echo "[INFO] Current kubefate ClusterInstall job status: $jobstatus want Success"
-    sleep 3
+    sleep 5
 done
 
 # clusterUUID=$(bin/kubefate job describe $jobUUID | grep -w ClusterId | awk '{print $2}')
