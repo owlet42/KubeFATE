@@ -52,7 +52,7 @@ fi
 # create cluster
 echo -e "$INFO: Cluster Install"
 jobUUID=$(bin/kubefate cluster install -f cluster.yaml | sed "s/^.*=//g" )
-
+echo -e "DEBUG: jobUUID: $jobUUID"
 MAX_TRY=60
 for (( i=1; i<=$MAX_TRY; i++ ))
 do
@@ -77,6 +77,7 @@ done
 # update cluster
 echo -e "$INFO: Cluster Update"
 jobUUID=$(bin/kubefate cluster update -f cluster-spark.yaml | sed "s/^.*=//g" )
+echo -e "DEBUG: jobUUID: $jobUUID"
 for (( i=1; i<=$MAX_TRY; i++ ))
 do
     if [ $i -eq $MAX_TRY ]
@@ -99,7 +100,7 @@ done
 # gotUUID=$(bin/kubefate cluster list |  grep -w  | awk '{print $2}' )
 echo -e "$INFO: Cluster Describe"
 clusterUUID=$(bin/kubefate job describe $jobUUID | grep -w ClusterId | awk '{print $2}')
-
+echo -e "DEBUG: clusterUUID: $clusterUUID"
 # cluster describe
 clusterStatus=$(bin/kubefate cluster describe $clusterUUID | grep -w Status | awk '{print $2}' )
 if [ $clusterStatus == "Running" ]
@@ -112,6 +113,7 @@ fi
 # delete cluster
 echo -e "$INFO: Cluster Delete"
 jobUUID=$(bin/kubefate cluster delete $clusterUUID | sed "s/^.*=//g" )
+echo -e "DEBUG: jobUUID: $jobUUID"
 for (( i=1; i<=$MAX_TRY; i++ ))
 do
     if [ $i -eq $MAX_TRY ]
