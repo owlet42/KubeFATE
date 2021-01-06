@@ -63,12 +63,12 @@ do
        exit 1
     fi
     jobstatus=$(bin/kubefate job describe jobUUID | grep -w Status | awk '{print $2}' )
-    if [ $status == "Success" ]
+    if [ $jobstatus == "Success" ]
     then
         echo -e "$Success: ClusterInstall job success"
         break
     fi
-    echo "[INFO] Current kubefate ClusterInstall job status: $status want Success"
+    echo "[INFO] Current kubefate ClusterInstall job status: $jobstatus want Success"
     sleep 3
 done
 
@@ -86,12 +86,12 @@ do
        exit 1
     fi
     jobstatus=$(bin/kubefate job describe $jobUUID | grep -w Status | awk '{print $2}' )
-    if [ $status == "Success" ]
+    if [ $jobstatus == "Success" ]
     then
         echo -e "$Success: ClusterUpdate job success"
         break
     fi
-    echo "[INFO] Current kubefate ClusterUpdate job status: $status want Success"
+    echo "[INFO] Current kubefate ClusterUpdate job status: $jobstatus want Success"
     sleep 3
 done
 
@@ -121,12 +121,12 @@ do
        exit 1
     fi
     jobstatus=$(bin/kubefate job describe $jobUUID | grep -w Status | awk '{print $2}' )
-    if [ $status == "Success" ]
+    if [ $jobstatus == "Success" ]
     then
         echo -e "$Success: ClusterDelete job success"
         break
     fi
-    echo "[INFO] Current kubefate ClusterDelete job status: $status want Success"
+    echo "[INFO] Current kubefate ClusterDelete job status: $jobstatus want Success"
     sleep 3
 done
 echo -e "$INFO: Cluster CURD test Success!"
