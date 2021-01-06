@@ -4,6 +4,7 @@ dir=$(dirname $0)
 # deploy kubefate
 cd $dir/../../k8s-deploy
 
+make install
 
 # get ingress 80 nodeport
 ingressNodePort=$(kubectl -n ingress-nginx get svc/ingress-nginx-controller -o jsonpath='{.spec.ports[0].nodePort}')
@@ -102,6 +103,8 @@ do
     echo "# Current kubefate ClusterDelete job status: $status want Success"
     sleep 3
 done
+
+make uninstall
 
 exit 0
 
