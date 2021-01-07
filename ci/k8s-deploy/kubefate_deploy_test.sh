@@ -15,8 +15,13 @@ cd $dir/../../k8s-deploy
 # namespace and rbac
 kubectl apply -f rbac-config.yaml
 
-# 
-IMG=federatedai/kubefate:latest
+# Is mirror specified
+if [$KubeFATE_IMG == ""]
+then
+  IMG=federatedai/kubefate:latest
+else
+  IMG=$KubeFATE_IMG
+fi
 # set kubefate image:tag
 sed -i "s#image: federatedai/kubefate:.*#image: ${IMG}#g" kubefate.yaml
 # deploy kubefate
