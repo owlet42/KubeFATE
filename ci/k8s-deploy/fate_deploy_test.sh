@@ -55,27 +55,27 @@ rust=$(bin/kubefate cluster install -f cluster.yaml )
 jobUUID=""
 jobUUID=$( echo $rust | sed "s/^.*=//g" | sed "s/\r//g")
 echo -e "DEBUG: jobUUID: $jobUUID"
+if [[ $jobUUID == "" ]]
+then
+    echo -e "$Error: $rust"
+    exit 1
+fi
 MAX_TRY=120
 for (( i=1; i<=$MAX_TRY; i++ ))
 do
-    if [ $jobUUID == "" ]
-    then
-        echo -e "$Error: $rust"
-        exit 1
-    fi
-    if [ $i -eq $MAX_TRY ]
+    if [[ $i -eq $MAX_TRY ]]
     then
        echo -e "$ERROR: ClusterInstall job timeOut, please check"
        bin/kubefate job describe $jobUUID
        exit 1
     fi
     jobstatus=$(bin/kubefate job describe $jobUUID | grep -w Status | awk '{print $2}' )
-    if [ $jobstatus == "Success" ]
+    if [[ $jobstatus == "Success" ]]
     then
         echo -e "$Success: ClusterInstall job success"
         break
     fi
-    if [ $jobstatus != "Pending" ] || [ $jobstatus != "Running" ]
+    if [[ $jobstatus != "Pending" ]] || [[ $jobstatus != "Running" ]]
     then
         echo -e "$ERROR: ClusterInstall job status error, status: $jobstatus"
         bin/kubefate job describe $jobUUID
@@ -92,26 +92,26 @@ echo -e "$INFO: Cluster Update"
 rust=$(bin/kubefate cluster update -f cluster-spark.yaml)
 jobUUID=$( echo $rust | sed "s/^.*=//g"  | sed "s/\r//g")
 echo -e "DEBUG: jobUUID: $jobUUID"
+if [[ $jobUUID == "" ]]
+then
+    echo -e "$Error: $rust"
+    exit 1
+fi
 for (( i=1; i<=$MAX_TRY; i++ ))
 do
-    if [ $jobUUID == "" ]
-    then
-        echo -e "$Error: $rust"
-        exit 1
-    fi
-    if [ $i -eq $MAX_TRY ]
+    if [[ $i -eq $MAX_TRY ]]
     then
        echo -e "$ERROR: ClusterUpdate job timeOut, please check"
        bin/kubefate job describe $jobUUID
        exit 1
     fi
     jobstatus=$(bin/kubefate job describe $jobUUID | grep -w Status | awk '{print $2}' )
-    if [ $jobstatus == "Success" ]
+    if [[ $jobstatus == "Success" ]]
     then
         echo -e "$Success: ClusterUpdate job success"
         break
     fi
-    if [ $jobstatus != "Pending" ] || [ $jobstatus != "Running" ]
+    if [[ $jobstatus != "Pending" ]] || [[ $jobstatus != "Running" ]]
     then
         echo -e "$ERROR: ClusterUpdate job status error, status: $jobstatus"
         bin/kubefate job describe $jobUUID
@@ -140,26 +140,26 @@ echo -e "$INFO: Cluster Delete"
 rust=$(bin/kubefate cluster delete $clusterUUID )
 jobUUID=$( echo $rust | sed "s/^.*=//g"  | sed "s/\r//g")
 echo -e "DEBUG: jobUUID: $jobUUID"
+if [[ $jobUUID == "" ]]
+then
+    echo -e "$Error: $rust"
+    exit 1
+fi
 for (( i=1; i<=$MAX_TRY; i++ ))
 do
-    if [ $jobUUID == "" ]
-    then
-        echo -e "$Error: $rust"
-        exit 1
-    fi
-    if [ $i -eq $MAX_TRY ]
+    if [[ $i -eq $MAX_TRY ]]
     then
        echo -e "$ERROR: ClusterDelete job timeOut, please check"
        bin/kubefate job describe $jobUUID
        exit 1
     fi
     jobstatus=$(bin/kubefate job describe $jobUUID | grep -w Status | awk '{print $2}' )
-    if [ $jobstatus == "Success" ]
+    if [[ $jobstatus == "Success" ]]
     then
         echo -e "$Success: ClusterDelete job success"
         break
     fi
-    if [ $jobstatus != "Pending" ] || [ $jobstatus != "Running" ]
+    if [[ $jobstatus != "Pending" ]] || [[ $jobstatus != "Running" ]]
     then
         echo -e "$ERROR: ClusterDelete job status error, status: $jobstatus"
         bin/kubefate job describe $jobUUID
