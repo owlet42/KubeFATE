@@ -53,7 +53,7 @@ fi
 echo -e "$INFO: Cluster Install"
 rust=$(bin/kubefate cluster install -f cluster.yaml )
 jobUUID=""
-jobUUID=$($rust | sed "s/^.*=//g" | sed "s/\r//g")
+jobUUID=$( echo $rust | sed "s/^.*=//g" | sed "s/\r//g")
 echo -e "DEBUG: jobUUID: $jobUUID"
 MAX_TRY=120
 for (( i=1; i<=$MAX_TRY; i++ ))
@@ -90,7 +90,7 @@ done
 # update cluster
 echo -e "$INFO: Cluster Update"
 rust=$(bin/kubefate cluster update -f cluster-spark.yaml)
-jobUUID=$($rust | sed "s/^.*=//g"  | sed "s/\r//g")
+jobUUID=$( echo $rust | sed "s/^.*=//g"  | sed "s/\r//g")
 echo -e "DEBUG: jobUUID: $jobUUID"
 for (( i=1; i<=$MAX_TRY; i++ ))
 do
@@ -138,7 +138,7 @@ fi
 # delete cluster
 echo -e "$INFO: Cluster Delete"
 rust=$(bin/kubefate cluster delete $clusterUUID )
-jobUUID=$($rust | sed "s/^.*=//g"  | sed "s/\r//g")
+jobUUID=$( echo $rust | sed "s/^.*=//g"  | sed "s/\r//g")
 echo -e "DEBUG: jobUUID: $jobUUID"
 for (( i=1; i<=$MAX_TRY; i++ ))
 do
