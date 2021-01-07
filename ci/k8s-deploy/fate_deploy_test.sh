@@ -52,6 +52,7 @@ fi
 # create cluster
 echo -e "$INFO: Cluster Install"
 rust=$(bin/kubefate cluster install -f cluster.yaml )
+jobUUID=""
 jobUUID=$($rust | sed "s/^.*=//g" | sed "s/\r//g")
 echo -e "DEBUG: jobUUID: $jobUUID"
 MAX_TRY=120
