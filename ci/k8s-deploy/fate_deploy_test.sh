@@ -75,7 +75,7 @@ do
         echo -e "$Success: ClusterInstall job success"
         break
     fi
-    if [[ $jobstatus != "Pending" ]] || [[ $jobstatus != "Running" ]]
+    if [[ $jobstatus != "Pending" ]] && [[ $jobstatus != "Running" ]]
     then
         echo -e "$ERROR: ClusterInstall job status error, status: $jobstatus"
         bin/kubefate job describe $jobUUID
@@ -111,7 +111,7 @@ do
         echo -e "$Success: ClusterUpdate job success"
         break
     fi
-    if [[ $jobstatus != "Pending" ]] || [[ $jobstatus != "Running" ]]
+    if [[ $jobstatus != "Pending" ]]  &&  [[ $jobstatus != "Running" ]]
     then
         echo -e "$ERROR: ClusterUpdate job status error, status: $jobstatus"
         bin/kubefate job describe $jobUUID
@@ -159,7 +159,7 @@ do
         echo -e "$Success: ClusterDelete job success"
         break
     fi
-    if [[ $jobstatus != "Pending" ]] || [[ $jobstatus != "Running" ]]
+    if [[ $jobstatus != "Pending" ]]  &&  [[ $jobstatus != "Running" ]]
     then
         echo -e "$ERROR: ClusterDelete job status error, status: $jobstatus"
         bin/kubefate job describe $jobUUID
