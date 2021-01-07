@@ -20,26 +20,25 @@ do
     status=$(kubectl get pod -l fate=kubefate -n kube-fate -o jsonpath='{.items[0].status.phase}')
     if [ $status == "Running" ]
     then
-        echo -e "# kubefate are ok"
+        echo -e "$INFO: kubefate are ok"
         break
     fi
-    echo -e "# Current kubefate pod status: $status want Running"
+    echo -e "[INFO] Current kubefate pod status: $status want Running"
     sleep 2
 done
 
-# get ingress 80 nodeport
-ingressNodePort=$(kubectl -n ingress-nginx get svc/ingress-nginx-controller -o jsonpath='{.spec.ports[0].nodePort}')
+sleep 5
 
+# get ingress nodeip
 ingressPodName=$(kubectl -n ingress-nginx get pod -l app.kubernetes.io/component=controller -o jsonpath='{.items[0].metadata.name}')
-
 ingressNodeIp=$(kubectl -n ingress-nginx get pod/$ingressPodName -o jsonpath='{.status.hostIP}')
-
 # set host
 echo -e "$INFO: set hosts"
 echo $ingressNodeIp kubefate.net >> /etc/hosts
 
 # set SERVICEURL
 echo -e "$INFO: check kubefate version"
+# get ingress 80 nodeport
 ingressNodePort=$(kubectl -n ingress-nginx get svc/ingress-nginx-controller -o jsonpath='{.spec.ports[0].nodePort}')
 export FATECLOUD_SERVICEURL=kubefate.net:$ingressNodePort
 echo $FATECLOUD_SERVICEURL
@@ -135,6 +134,7 @@ done
 echo -e "$INFO: Cluster CURD test Success!"
 echo -e "$INFO: kubefate Uninstall"
 make uninstall
+sed -i '$d' /etc/hosts
 echo -e "$INFO: fate_deplot_test done."
 exit 0
 
