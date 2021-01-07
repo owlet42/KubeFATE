@@ -49,6 +49,31 @@ if [ $? -ne 0 ];
     exit 1
 fi
 
+# Is mirror specified
+if [$FATE_IMG_REGISTRY == ""]
+then
+  REGISTRY=""
+else
+  REGISTRY=$FATE_IMG_REGISTRY
+fi
+if [$FATE_IMG_TAG == ""]
+then
+  FATE_IMG_TAG="latest"
+fi
+if [$FATE_SERVING_IMG_TAG == ""]
+then
+  FATE_SERVING_IMG_TAG="latest"
+fi
+echo -e "DEBUG: IMG: ${IMG}"
+# set kubefate image:tag
+sed -i "s#registry: ""#image: ${REGISTRY}#g" cluster.yaml
+sed -i "s#registry: ""#image: ${REGISTRY}#g" cluster-spark.yaml
+sed -i "s#registry: ""#image: ${REGISTRY}#g" cluster-serving.yaml
+
+sed -i "s#imageTag: ""#imageTag: ${FATE_IMG_TAG}#g" cluster.yaml
+sed -i "s#imageTag: ""#imageTag: ${FATE_IMG_TAG}#g" cluster-spark.yaml
+sed -i "s#imageTag: ""#imageTag: ${FATE_SERVING_IMG_TAG}#g" cluster-serving.yaml
+
 # create cluster
 echo -e "$INFO: Cluster Install"
 rust=$(bin/kubefate cluster install -f cluster.yaml )
@@ -172,6 +197,6 @@ echo -e "$INFO: Cluster CURD test Success!"
 echo -e "$INFO: kubefate Uninstall"
 make uninstall
 sed -i '$d' /etc/hosts
-echo -e "$INFO: fate_deplot_test done."
+echo -e "$INFO: fate_deploy_test done."
 exit 0
 
