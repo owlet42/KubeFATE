@@ -5,13 +5,13 @@ source $dir/color.sh
 source $dir/common.sh
 
 if check_kubectl; then
-  echo -e "$INFO: kubectl ready"
+  loginfo "kubectl ready"
 else
   exit 1
 fi
 
 if kubefate_install; then
-  echo -e "$INFO: kubefate install success"
+  loginfo "kubefate install success"
 else
   exit 1
 fi
@@ -19,7 +19,7 @@ fi
 set_host
 
 if check_kubefate_version; then
-  echo -e "$INFO: kubefate CLI ready"
+  loginfo "kubefate CLI ready"
 else
   exit 1
 fi
@@ -28,6 +28,6 @@ kubefate_uninstall
 
 clean_host
 
-echo -e "$INFO: kubefate_deploy_test done."
+loginfo "kubefate_deploy_test done."
 
 exit 0
