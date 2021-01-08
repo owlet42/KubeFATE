@@ -49,6 +49,10 @@ if [ $? -ne 0 ];
     exit 1
 fi
 
+# upload chart
+
+bin/kubefate chart upload -f 
+
 # Is mirror specified
 if [$FATE_IMG_REGISTRY == ""]
 then
