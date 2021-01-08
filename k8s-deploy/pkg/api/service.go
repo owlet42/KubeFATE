@@ -50,11 +50,24 @@ func initDb() error {
 	return fmt.Errorf("initialization failed: %s", err)
 }
 
-func initTables() {
-	new(modules.User).InitTable()
-	new(modules.Cluster).InitTable()
-	new(modules.HelmChart).InitTable()
-	new(modules.Job).InitTable()
+func initTables() error {
+	err := new(modules.User).InitTable()
+	if err != nil {
+		return err
+	}
+	err = new(modules.Cluster).InitTable()
+	if err != nil {
+		return err
+	}
+	err = new(modules.HelmChart).InitTable()
+	if err != nil {
+		return err
+	}
+	err = new(modules.Job).InitTable()
+	if err != nil {
+		return err
+	}
+	return nil
 }
 
 // Run starts the API server
@@ -74,13 +87,23 @@ func Run() error {
 
 	modules.DB = orm.DB
 
-	initTables()
+	log.Info().Msg("Database connection successful")
+
+	err = initTables()
+	if err != nil {
+		log.Error().Err(err).Msg("initTables error, ")
+		return err
+	}
+
+	log.Info().Msg("Table initialization succeeded")
 
 	err = initUser()
 	if err != nil {
 		log.Error().Err(err).Msg("initUser error, ")
 		return err
 	}
+
+	log.Info().Msg("User created successfully")
 
 	// use gin.New() instead
 	r := gin.New()
@@ -106,6 +129,8 @@ func Run() error {
 	if os.Getenv("GIN_MODE") == "release" {
 		log.Info().Msg("Listening and serving HTTP on " + address + ":" + port)
 	}
+
+	log.Info().Msg("Gin configuration successful")
 
 	err = r.Run(endpoint)
 	if err != nil {
