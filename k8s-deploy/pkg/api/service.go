@@ -17,6 +17,7 @@ package api
 import (
 	"fmt"
 	"os"
+	"time"
 
 	"github.com/FederatedAI/KubeFATE/k8s-deploy/pkg/modules"
 	"github.com/FederatedAI/KubeFATE/k8s-deploy/pkg/orm"
@@ -36,7 +37,17 @@ func initUser() error {
 }
 
 func initDb() error {
-	return orm.InitDB()
+	var err error
+
+	for i := 0; i < 3; i++ {
+		err = orm.InitDB()
+		if err == nil {
+			return nil
+		}
+		time.Sleep(5 * time.Second)
+	}
+
+	return fmt.Errorf("initialization failed: %s", err)
 }
 
 func initTables() {
