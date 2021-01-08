@@ -163,5 +163,7 @@ spec:
         paths:
           - path: /
             backend:
-              serviceName: kubefate
-              servicePort: 8080
+              service:
+                name: kubefate
+                port: 
+                  number: 8080
